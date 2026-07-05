@@ -1,40 +1,212 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>// el sur — gh0stnet</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: #000;
-    color: #00ff41;
-    font-family: 'Courier New', monospace;
-    padding: 40px 20px;
-    line-height: 1.6;
-  }
-  .container { max-width: 640px; margin: 0 auto; }
-  h1 { font-size: 14px; margin-bottom: 30px; opacity: 0.6; }
-  .content { margin-bottom: 40px; }
-  .content p { margin-bottom: 16px; opacity: 0.85; }
-  .meta { opacity: 0.4; font-size: 12px; margin-top: 60px; }
-  a { color: #00ff41; text-decoration: none; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>el sur — gh0stnet</title>
+  <meta name="description" content="coordenadas del origen">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080808;
+      --bg2: #0d0d0d;
+      --border: #1a1a1a;
+      --cyan: #00fff0;
+      --text: #c8c8c8;
+      --text-dim: #555;
+      --white: #e8e8e8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      min-height: 100vh;
+      cursor: crosshair;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      background: rgba(8,8,8,0.95);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+    }
+    header .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'VT323', monospace;
+      font-size: 28px;
+      color: var(--cyan);
+      text-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,255,240,0.3);
+      text-decoration: none;
+      letter-spacing: 2px;
+    }
+    .logo span { color: var(--text-dim); }
+    nav { display: flex; gap: 24px; }
+    nav a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 12px;
+      letter-spacing: 1px;
+      transition: color 0.2s;
+      text-transform: uppercase;
+    }
+    nav a:hover { color: var(--cyan); }
+    .post-content {
+      padding: 60px 0;
+    }
+    .post-meta {
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 2px;
+      margin-bottom: 24px;
+    }
+    .post-title {
+      font-family: 'VT323', monospace;
+      font-size: 48px;
+      color: var(--white);
+      margin-bottom: 40px;
+      line-height: 1;
+    }
+    .post-body {
+      font-size: 14px;
+      line-height: 2;
+      color: var(--text);
+    }
+    .post-body p {
+      margin-bottom: 24px;
+    }
+    .post-body .coordenadas {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--cyan);
+      padding: 20px 24px;
+      margin: 32px 0;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--cyan);
+    }
+    .post-body .hint {
+      color: var(--text-dim);
+      font-size: 12px;
+      font-style: italic;
+      margin-top: 32px;
+    }
+    .post-body .hint a {
+      color: var(--cyan);
+      text-decoration: none;
+      font-size: 14px;
+      display: block;
+      margin-top: 12px;
+      font-style: normal;
+    }
+    .post-body .hint a:hover {
+      text-decoration: underline;
+    }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 0;
+      margin-top: 40px;
+    }
+    footer .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-left, .footer-right {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .footer-right span { color: var(--cyan); }
+    a.back {
+      color: var(--cyan);
+      text-decoration: none;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+    a.back:hover { text-decoration: underline; }
+  </style>
 </head>
 <body>
-<div class="container">
-  <h1>// el sur</h1>
-  
-  <div class="content">
-    <p>// la raíz está en el sur. el sur tiene nombre.</p>
-    <p>// no es un lugar. es una frecuencia.</p>
-    <p>// el operador traduce entre dos orillas.</p>
-    <p>// 34.2167°N, 5.9833°W</p>
-  </div>
-  
-  <div class="meta">
-    <p>2024.01.01 // origin</p>
-    <p><a href="/">[← volver]</a></p>
-  </div>
-</div>
+
+  <header>
+    <div class="container">
+      <a href="/" class="logo">gh<span>0</span>stnet<span>_</span></a>
+      <nav>
+        <a href="/">feed</a>
+        <a href="/about">about</a>
+        <a href="/ops">ops</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="post-content">
+        <div class="post-meta">2026.07.05 // origin</div>
+        <h1 class="post-title">el sur</h1>
+        
+        <div class="post-body">
+          <p>la raíz está en el sur. el sur tiene nombre.</p>
+          
+          <p>no es un lugar. es una frecuencia.</p>
+          
+          <p>el operador traduce entre dos orillas.</p>
+          
+          <div class="coordenadas">
+            34.2167°N, 5.9833°W
+          </div>
+          
+          <p class="hint">
+            si sabes de dónde vengo, sabes cómo entrar.
+            <a href="https://nodespectrum.pp.ua/origen">→ nodespectrum.pp.ua/origen</a>
+          </p>
+          
+          <p>el origen no se explica. se busca.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-left">
+        <a href="/" class="back">[← volver al feed]</a>
+      </div>
+      <div class="footer-right">
+        <span>silence</span> is not absence. silence is control.
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
