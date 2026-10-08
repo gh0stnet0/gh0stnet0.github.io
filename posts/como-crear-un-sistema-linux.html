@@ -1,0 +1,3440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cómo construir tu propio sistema Linux // gh0stnet</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080808; --bg2: #0d0d0d; --border: #1a1a1a;
+      --cyan: #00fff0; --cyan-dim: rgba(0,255,240,0.15);
+      --text: #c8c8c8; --text-dim: #555; --red: #ff2e2e; --white: #e8e8e8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Share Tech Mono', monospace;
+      font-size: 13px; line-height: 1.7; min-height: 100vh; cursor: crosshair; }
+    body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+      pointer-events: none; z-index: 9999; }
+    body::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9998; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+    header { border-bottom: 1px solid var(--border); padding: 20px 0; position: sticky; top: 0;
+      background: rgba(8,8,8,0.95); backdrop-filter: blur(8px); z-index: 100; }
+    header .container { display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: 'VT323', monospace; font-size: 28px; color: var(--cyan);
+      text-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,255,240,0.3); text-decoration: none; letter-spacing: 2px; }
+    .logo span { color: var(--text-dim); }
+    nav { display: flex; gap: 24px; }
+    nav a { color: var(--text-dim); text-decoration: none; font-size: 12px; letter-spacing: 1px;
+      transition: color 0.2s; text-transform: uppercase; }
+    nav a:hover, nav a.active { color: var(--cyan); }
+    .status-bar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 6px 0;
+      font-size: 11px; color: var(--text-dim); overflow: hidden; }
+    .status-bar .container { display: flex; gap: 32px; align-items: center; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
+      display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--cyan); } 50% { opacity: 0.4; box-shadow: none; } }
+
+    /* POST PAGE */
+    .post-head { padding: 56px 0 28px; border-bottom: 1px solid var(--border); }
+    .post-meta { font-size: 11px; color: var(--cyan); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+    .post-meta .sep { color: var(--text-dim); margin: 0 8px; }
+    .post-head h1 { font-family: 'VT323', monospace; font-size: 48px; color: var(--white); line-height: 1.05; font-weight: normal; }
+    .credit { background: var(--bg2); border: 1px solid var(--border); border-left: 2px solid var(--cyan);
+      margin: 28px 0 8px; padding: 12px 16px; font-size: 11px; color: var(--text-dim); letter-spacing: 1px; }
+    .credit a { color: var(--cyan); text-decoration: none; }
+    .credit a:hover { text-shadow: 0 0 10px var(--cyan); }
+    article { padding: 32px 0 20px; }
+    article h1, article h2, article h3, article h4 { font-family: 'VT323', monospace; color: var(--cyan);
+      font-weight: normal; line-height: 1.1; margin: 36px 0 14px; }
+    article h1 { font-size: 36px; } article h2 { font-size: 30px; } article h3 { font-size: 25px; } article h4 { font-size: 21px; }
+    article p, article ul, article ol, article table, article pre, article blockquote { margin-bottom: 18px; }
+    article ul, article ol { padding-left: 24px; }
+    article a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid var(--cyan-dim); }
+    article a:hover { border-bottom-color: var(--cyan); }
+    article strong { color: var(--white); }
+    article code { color: var(--cyan); background: var(--bg2); padding: 1px 5px; font-family: 'Share Tech Mono', monospace; }
+    article pre { background: var(--bg2); border: 1px solid var(--border); border-top: 2px solid var(--cyan);
+      padding: 16px 20px; overflow-x: auto; font-size: 12px; line-height: 1.8; }
+    article pre code { background: none; padding: 0; color: var(--text); }
+    article img, article video { max-width: 100%; height: auto; border: 1px solid var(--border); display: block; margin: 18px 0; }
+    article blockquote { border-left: 2px solid var(--text-dim); padding-left: 16px; color: var(--text-dim); }
+    article table { border-collapse: collapse; display: block; overflow-x: auto; }
+    article td, article th { border: 1px solid var(--border); padding: 6px 12px; }
+    article th { color: var(--cyan); text-align: left; }
+    article hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+    .back { display: inline-block; margin: 8px 0 40px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-dim); text-decoration: none; }
+    .back:hover { color: var(--cyan); }
+
+    footer { border-top: 1px solid var(--border); padding: 32px 0; margin-top: 40px; }
+    footer .container { display: flex; justify-content: space-between; align-items: center; }
+    .footer-left, .footer-right { font-size: 11px; color: var(--text-dim); }
+    .footer-right span { color: var(--cyan); }
+    .logo:hover { animation: glitch 0.3s infinite; }
+    @keyframes glitch {
+      0% { text-shadow: 0 0 20px var(--cyan), 2px 0 var(--red), -2px 0 var(--cyan); }
+      25% { text-shadow: 0 0 20px var(--cyan), -2px 0 var(--red), 2px 0 var(--cyan); }
+      50% { text-shadow: 0 0 20px var(--cyan), 2px 2px var(--red), -2px -2px var(--cyan); }
+      75% { text-shadow: 0 0 20px var(--cyan), -2px 2px var(--red), 2px -2px var(--cyan); }
+      100% { text-shadow: 0 0 20px var(--cyan), 0 0 var(--red), 0 0 var(--cyan); }
+    }
+    @media (max-width: 600px) {
+      .post-head h1 { font-size: 36px; } nav { gap: 16px; }
+      footer .container { flex-direction: column; gap: 8px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/" class="logo">gh<span>0</span>stnet<span>_</span></a>
+      <nav>
+        <a href="/" class="active">feed</a>
+        <a href="/about">about</a>
+        <a href="/ops">ops</a>
+        <a href="/bugbounty">disclosures</a>
+      </nav>
+    </div>
+  </header>
+  <div class="status-bar">
+    <div class="container">
+      <span><span class="status-dot"></span>systems nominal</span>
+      <span>// gh0stnet0.github.io</span>
+    </div>
+  </div>
+  <main>
+    <div class="container">
+      <section class="post-head">
+        <div class="post-meta">2020.04.23<span class="sep">//</span>configuración</div>
+        <h1>Cómo construir tu propio sistema Linux</h1>
+        <div class="credit">// archive mirror &mdash; originally published by <a href="https://s4vitar.github.io">S4vitar</a> on 2020-04-23. reposted with the author's permission.</div>
+      </section>
+      <article>
+<h1 id="cómo-construir-tu-propio-sistema-linux-s4vios">Cómo construir tu propio sistema Linux (S4viOS)</h1>
+<p><img src="https://wallpaperaccess.com/full/981849.png" alt="Portada OS" /></p>
+<p>Antes que nada, deciros que toda esta guía la tenéis también disponible en mi Gist, desde donde os podéis dirigir directamente a través del índice a la sección que queráis:</p>
+<ul>
+<li><a href="https://gist.github.com/s4vitar/8a2b18ec1f1b16226e21d4b89cbef270"><span>https://gist.github.com/s4vitar/8a2b18ec1f1b16226e21d4b89cbef270</span></a></li>
+</ul>
+<p>Por alguna razón los eventos clickeables del índice desde esta página no son funcionales, así que cualquier cosa os podréis manejar por allí más cómodamente (No te olvides de dejar un Fav :P).</p>
+<h2 id="índice-y-estructura-principal">Índice y Estructura Principal</h2>
+<ul>
+<li><a href="#Antecedentes">Antecedentes</a></li>
+<li><a href="#Prerrequisitos">Prerrequisitos</a></li>
+<li><a href="#Introducción">Introducción</a>
+<ul>
+<li><a href="#Consideraciones">Consideraciones</a></li>
+<li><a href="#Instalando-Debian-10.3.0">Instalando Debian 10.3.0</a></li>
+<li><a href="#Configurando-el-Debian-base">Configurando el Debian base</a></li>
+<li><a href="#instalación-de-paquetes-base">Instalación de paquetes base</a>
+<ul>
+<li><a href="#bash">Bash 3.2</a></li>
+<li><a href="#Binutils">Binutils 2.25</a></li>
+<li><a href="#Bison">Bison 2.7</a></li>
+<li><a href="#Bzip2">Bzip2 1.0.4</a></li>
+<li><a href="#Coreutils">Coreutils 6.9</a></li>
+<li><a href="#Diffutils">Diffutils 2.8.1</a></li>
+<li><a href="#Findutils">Findutils 4.2.31</a></li>
+<li><a href="#Gawk">Gawk 4.0.1</a></li>
+<li><a href="#gcc">GCC 6.2</a></li>
+<li><a href="#glibc">Glibc 2.11</a></li>
+<li><a href="#Grep">Grep 2.5.1</a></li>
+<li><a href="#Gzip">Gzip 1.3.12</a></li>
+<li><a href="#M4">M4 1.4.10</a></li>
+<li><a href="#Make">Make 4.0</a></li>
+<li><a href="#Patch">Patch 2.5.4</a></li>
+<li><a href="#Perl">Perl 5.8.8</a></li>
+<li><a href="#Python">Python 3.4</a></li>
+<li><a href="#Sed">Sed 4.1.5</a></li>
+<li><a href="#Tar">Tar 1.22</a></li>
+<li><a href="#Texinfo">Texinfo 4.7</a></li>
+<li><a href="#Xz">Xz 5.0.0</a></li>
+</ul></li>
+<li><a href="#version-check">Version Check</a></li>
+</ul></li>
+<li><a href="#creando-nueva-partición">Creando nueva partición</a>
+<ul>
+<li><a href="#Estructurando-la-partición-con-parted">Estructurando la partición con parted</a></li>
+</ul></li>
+<li><a href="#Descarga-de-paquetes-para-la-creación-del-sistema-base">Descarga de paquetes para la creación del sistema base</a></li>
+<li><a href="#Construyendo-un-sistema-temporal">Construyendo un sistema temporal</a>
+<ul>
+<li><a href="#Creación-de-un-nuevo-usuario">Creación de un nuevo usuario</a></li>
+<li><a href="#Compilación-de-paquetes">Compilación de paquetes</a>
+<ul>
+<li><a href="#Compilación-binutils">Compilación binutils</a></li>
+<li><a href="#Compilación-GCC">Compilación GCC</a></li>
+<li><a href="#Compilación-API-Headers">Compilación API Headers</a></li>
+<li><a href="#Compilación-Glibc">Compilación Glibc</a></li>
+<li><a href="#Compilación-Libstdc-de-GCC">Compilación Libstdc++ de GCC</a></li>
+<li><a href="#Compilación-Binutils-Fase-2">Compilación Binutils Fase 2</a></li>
+<li><a href="#Compilación-GCC-Fase-2">Compilación GCC Fase 2</a></li>
+<li><a href="#Compilación-Tcl">Compilación Tcl</a></li>
+<li><a href="#Compilación-Expect">Compilación Expect</a></li>
+<li><a href="#Compilación-DejaGNU">Compilación DejaGNU</a></li>
+<li><a href="#Compilación-M4">Compilación M4</a></li>
+<li><a href="#Compilación-Ncurses">Compilación Ncurses</a></li>
+<li><a href="#Compilación-Bash">Compilación Bash</a></li>
+<li><a href="#Compilación-Bison">Compilación Bison</a></li>
+<li><a href="#Compilación-Bzip2">Compilación Bzip2</a></li>
+<li><a href="#Compilación-Coreutils">Compilación Coreutils</a></li>
+<li><a href="#Compilación-Diffutils">Compilación Diffutils</a></li>
+<li><a href="#Compilación-File">Compilación File</a></li>
+<li><a href="#Compilación-Findutils">Compilación Findutils</a></li>
+<li><a href="#Compilación-Gawk">Compilación Gawk</a></li>
+<li><a href="#Compilación-Gettext">Compilación Gettext</a></li>
+<li><a href="#Compilación-Grep">Compilación Grep</a></li>
+<li><a href="#Compilación-Gzip">Compilación Gzip</a></li>
+<li><a href="#Compilación-Make">Compilación Make</a></li>
+<li><a href="#Compilación-Patch">Compilación Patch</a></li>
+<li><a href="#Compilación-Perl">Compilación Perl</a></li>
+<li><a href="#Compilación-Python">Compilación Python</a></li>
+<li><a href="#Compilación-Sed">Compilación Sed</a></li>
+<li><a href="#Compilación-Tar">Compilación Tar</a></li>
+<li><a href="#Compilación-Texinfo">Compilación Texinfo</a></li>
+<li><a href="#Compilación-Xz">Compilación Xz</a></li>
+</ul></li>
+<li><a href="#Stripping">Stripping</a></li>
+<li><a href="#Cambio-de-propietario">Cambio de propietario</a></li>
+</ul></li>
+<li><a href="#Contruyendo-el-sistema-LFS">Construyendo el sistema LFS</a>
+<ul>
+<li><a href="#Preparando-el-sistema-de-archivos-del-kernel-virtual">Preparando el sistema de archivos del kernel virtual</a></li>
+<li><a href="#Montaje-del-sistema-de-archivos-del-kernel-virtual">Montaje del sistema de archivos del kernel virtual</a></li>
+<li><a href="#Entrando-en-el-entorno-Chroot">Entrando en el entorno Chroot</a>
+<ul>
+<li><a href="#Creación-de-directorios">Creación de directorios</a></li>
+<li><a href="#Creación-de-archivos-esenciales-y-links-simbólicos">Creación de archivos esenciales y Links Simbólicos</a></li>
+</ul></li>
+<li><a href="#Instalación-del-Software-básico-del-sistema">Instalación del Software básico del sistema</a>
+<ul>
+<li><a href="#API-Headers-en-LFS">API Headers en LFS</a></li>
+<li><a href="#Man-pages-en-LFS">Man pages en LFS</a></li>
+<li><a href="#Glibc-en-LFS">Glibc en LFS</a></li>
+<li><a href="#Ajuste-de-la-Toolchain">Ajuste de la Toolchain</a></li>
+<li><a href="#Zlib-en-LFS">Zlib en LFS</a></li>
+<li><a href="#Bzip2-en-LFS">Bzip2 en LFS</a></li>
+<li><a href="#Xz-en-LFS">Xz en LFS</a></li>
+<li><a href="#File-en-LFS">File en LFS</a></li>
+<li><a href="#Readline-en-LFS">Readline en LFS</a></li>
+<li><a href="#M4-en-LFS">M4 en LFS</a></li>
+<li><a href="#Bc-en-LFS">Bc en LFS</a></li>
+<li><a href="#Binutils-en-LFS">Binutils en LFS</a></li>
+<li><a href="#GMP-en-LFS">GMP en LFS</a></li>
+<li><a href="#MPFR-en-LFS">MPFR en LFS</a></li>
+<li><a href="#MPC-en-LFS">MPC en LFS</a></li>
+<li><a href="#Attr-en-LFS">Attr en LFS</a></li>
+<li><a href="#Acl-en-LFS">Acl en LFS</a></li>
+<li><a href="#Instalación-del-Shadow">Instalación del Shadow</a></li>
+<li><a href="#GCC-en-LFS">GCC en LFS</a></li>
+<li><a href="#Pk-config-en-LFS">Pk-config en LFS</a></li>
+<li><a href="#Ncurses-en-LFS">Ncurses en LFS</a></li>
+<li><a href="#Sed-en-LFS">Sed en LFS</a></li>
+<li><a href="#Psmisc-en-LFS">Psmisc en LFS</a></li>
+<li><a href="#Iana-Etc-en-LFS">Iana Etc en LFS</a></li>
+<li><a href="#Bison-en-LFS">Bison en LFS</a></li>
+<li><a href="#Flex-en-LFS">Flex en LFS</a></li>
+<li><a href="#Grep-en-LFS">Grep en LFS</a></li>
+<li><a href="#Bash-en-LFS">Bash en LFS</a></li>
+<li><a href="#Libtool-en-LFS">Libtool en LFS</a></li>
+<li><a href="#GDBM-en-LFS">GDBM en LFS</a></li>
+<li><a href="#Gperf-en-LFS">Gperf en LFS</a></li>
+<li><a href="#Expat-en-LFS">Expat en LFS</a></li>
+<li><a href="#Inetutils-en-LFS">Inetutils en LFS</a></li>
+<li><a href="#Perl-en-LFS">Perl en LFS</a></li>
+<li><a href="#XML-Parser-en-LFS">XML::Parser en LFS</a></li>
+<li><a href="#Intltool-en-LFS">Intltool en LFS</a></li>
+<li><a href="#Autoconf-en-LFS">Autoconf en LFS</a></li>
+<li><a href="#Automake-en-LFS">Automake en LFS</a></li>
+<li><a href="#Kmod-en-LFS">Kmod en LFS</a></li>
+<li><a href="#Gettext-en-LFS">Gettext en LFS</a></li>
+<li><a href="#Libelf-de-elfutils-en-LFS">Libelf de Elfutils en LFS</a></li>
+<li><a href="#Libffi-en-LFS">Libffi en LFS</a></li>
+<li><a href="#Openssl-en-LFS">Openssl en LFS</a></li>
+<li><a href="#Python3-en-LFS">Python3 en LFS</a></li>
+<li><a href="#Ninja-en-LFS">Ninja en LFS</a></li>
+<li><a href="#Meson-en-LFS">Meson en LFS</a></li>
+<li><a href="#Coreutils-en-LFS">Coreutils en LFS</a></li>
+<li><a href="#Check-en-LFS">Check en LFS</a></li>
+<li><a href="#Diffutils-en-LFS">Diffutils en LFS</a></li>
+<li><a href="#Gawk-en-LFS">Gawk en LFS</a></li>
+<li><a href="#Findutils-en-LFS">Findutils en LFS</a></li>
+<li><a href="#Groff-en-LFS">Groff en LFS</a></li>
+<li><a href="#GRUB-en-LFS">GRUB en LFS</a></li>
+<li><a href="#Less-en-LFS">Less en LFS</a></li>
+<li><a href="#Gzip-en-LFS">Gzip en LFS</a></li>
+<li><a href="#Zstd-en-LFS">Zstd en LFS</a></li>
+<li><a href="#IPRoute-en-LFS">IPRoute en LFS</a></li>
+<li><a href="#Kbd-en-LFS">Kbd en LFS</a></li>
+<li><a href="#Libpipeline-en-LFS">Libpipeline en LFS</a></li>
+<li><a href="#Make-en-LFS">Make en LFS</a></li>
+<li><a href="#Patch-en-LFS">Patch en LFS</a></li>
+<li><a href="#Man-DB-en-LFS">Man DB en LFS</a></li>
+<li><a href="#Tar-en-LFS">Tar en LFS</a></li>
+<li><a href="#Texinfo-en-LFS">Texinfo en LFS</a></li>
+<li><a href="#Vim-en-LFS">Vim en LFS</a></li>
+<li><a href="#Procps-en-LFS">Procps-ng en LFS</a></li>
+<li><a href="#Util-Linux-en-LFS">Util-Linux en LFS</a></li>
+<li><a href="#E2fsprogs-en-LFS">E2fsprogs en LFS</a></li>
+<li><a href="#Sysklogd-en-LFS">Sysklogd en LFS</a></li>
+<li><a href="#Sysvinit-en-LFS">Sysvinit en LFS</a></li>
+<li><a href="#Eudev-en-LFS">Eudev en LFS</a></li>
+</ul></li>
+<li><a href="#Limpieza-Final">Limpieza Final</a></li>
+<li><a href="#Configuración-del-sistema">Configuración del sistema</a>
+<ul>
+<li><a href="#Instalación-de-LFS-Bootscripts">Instalación de LFS Bootscripts</a></li>
+<li><a href="#Gestión-de-dispositivos">Gestión de dispositivos</a></li>
+<li><a href="#Creación-de-archivos-de-configuración-de-interfaz-de-red">Creación de archivos de configuración de interfaz de red</a></li>
+<li><a href="#Configurando-el-nombre-de-host-del-sistema">Configurando el nombre de host del sistema</a></li>
+<li><a href="#Configurando-el-sysvinit">Configurando el Sysvinit</a></li>
+<li><a href="#Configuración-del-reloj-del-sistema">Configuración del reloj del sistema</a></li>
+<li><a href="#Configuración-de-la-consola-de-linux">Configuración de la consola de Linux</a></li>
+<li><a href="#Creando-archivo-rc-site">Creando archivo rc.site</a></li>
+</ul></li>
+<li><a href="#Archivos-de-inicio-de-Bash-Shell">Archivos de inicio de Bash Shell</a></li>
+</ul></li>
+<li><a href="#Haciendo-nuestro-sistema-booteable">Haciendo nuestro sistema Booteable</a>
+<ul>
+<li><a href="#Creando-archivo-fstab">Creando archivo fstab</a></li>
+<li><a href="#Instalación-del-kernel">Instalación del Kernel</a></li>
+<li><a href="#Uso-del-grub-para-configurar-el-proceso-de-arranque">Uso del GRUB para configurar el proceso de arranque</a></li>
+</ul></li>
+<li><a href="#Creando-archivos-finales">Creando archivos finales</a></li>
+<li><a href="#Arrancando-nuestra-nueva-distribución-Linux-S4viOS">Arrancando nuestra nueva distribución Linux S4viOS</a></li>
+</ul>
+<h1 id="antecedentes">Antecedentes</h1>
+<p>Antes que nada, me gustaría comentar una serie de puntos para aquellos que pretenden seguir esta guía.</p>
+<h4 id="por-qué-crear-un-sistema-linux-desde-0-manualmente-en-vez-de-descargar-e-instalar-uno-existente">¿Por qué crear un sistema Linux desde 0 manualmente en vez de descargar e instalar uno existente?</h4>
+<p>Bueno, si te estás haciendo esta pregunta es que lo tuyo no es la curiosidad.</p>
+<p>La idea de esta guía es que te sirva de ayuda para entender y aprender cómo funciona un sistema Linux desde adentro hacia afuera. Construir un sistema LFS desde 0 te ayuda a entender qué hace que Linux funcione y cómo las cosas funcionan a bajo nivel.</p>
+<p>Aparte, una de las mejores cosas que se pueden sacar de provecho de todo esto es la capacidad de personalizar un sistema Linux para satisfacer tus propias necesidades únicas. No me considero un paranoico, pero en muchas distribuciones Linux no es la primera vez que me encuentro con un binario ya previamente compilado cuyo código no puedo ver (por no ser Open Source)... y a saber qué lleva dentro, igual hasta viene con regalo.</p>
+<p>En ese sentido, tal vez por pura prevención (y curiosidad), a veces es mejor tener el control de qué cosas son las que se están instalando en el sistema, ¿no crees?.</p>
+<h4 id="prerrequisitos">Prerrequisitos</h4>
+<p>Construir un sistema LFS no es una tarea simple. Para toda esta guía, se requiere un cierto nivel de conocimiento existente sobre la administración del sistema Unix. Si esto es así y se aplica para tu caso... a por ello.</p>
+<p>Otro de los requisitos que se requieren es la <strong>paciencia</strong>. Construir un sistema LFS no se hace en un día (creedme, lo he intentado), algunos paquetes tardan mucho en instalarse y hay algunas fases que de por sí requieren de tiempo.</p>
+<p>El tiempo estimado para construir tu propio sistema Linux oscila entre <strong>3 y 5 días</strong>, para que lo tengáis en cuenta.</p>
+<h1 id="introducción">INTRODUCCIÓN</h1>
+<h4 id="consideraciones">Consideraciones</h4>
+<p>Bueno antes de empezar, deciros que en mi caso voy a estar trabajando con VirtualBox.</p>
+<p>La pregunta que probablemente os hagáis es, ¿y no puedo usar VMware?, pues a ver, por poder podéis... PERO de las veces que he probado con VMware, justo en la fase final a la hora de hacer el Reboot... aparece un <strong>Kernel Panic</strong>, con el cual me estuve peleando en su momento y no encontré forma de arreglarlo.</p>
+<p>Si queréis no tener que estar lidiando con estos problemas, mi recomendación es que lo hagáis todo con <strong>Virtual Box</strong>. Por lo demás, hay que tener en cuenta que para construir tu propio sistema Linux, necesitas primero de una distribución Linux de base sobre la que trabajar, ya que es desde esta desde donde estaremos toqueteando nuestro nuevo disco duro virtual que posteriormente crearemos.</p>
+<p>En mi caso, estaré trabajando con un <strong>Debian 10.3.0 amd64</strong>, el cual puedes descargar desde la página oficial:</p>
+<ul>
+<li><a href="https://www.debian.org/distrib/netinst">https://www.debian.org/distrib/netinst</a></li>
+</ul>
+<h4 id="instalando-debian-1030">Instalando Debian 10.3.0</h4>
+<p>Una vez descargado el ISO, lo único que tendremos que hacer es lo siguiente.</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346m7.png">
+</p><br>
+
+<p>Es decir, comenzamos creando una nueva máquina virtual. Posteriormente, le asignamos un nombre e indicamos el tipo de sistema operativo con el que estamos tratando así como la versión:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346mT.png">
+</p><br>
+
+<p>Una vez hecho, indicamos un tamaño de memoria. En mi caso, asignaré <strong>4096 MB</strong> de memoria:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346mU.png">
+</p><br>
+
+<p>En el siguiente paso, crearemos un nuevo disco duro virtual:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346mV.png">
+</p><br>
+
+<p>En la selección del tipo de archivo de disco duro, usaremos <strong>VDI</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346n3.png">
+</p><br>
+
+<p>En la especificación de almacenamiento en unidad de disco duro física escogeremos <strong>Tamaño fijo</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346n1.png">
+</p><br>
+
+<p>Y por último, asignaremos un total de <strong>30 GB</strong> para nuestro disco duro virtual:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346n2.png">
+</p><br>
+
+<p>Una vez finalizado, lo único que tendremos que hacer es dirigirnos a las propiedades de nuestra nueva máquina e importar la ISO de nuestro Debian (la que previamente hemos descargado).</p>
+<p>Esto se hace desde la siguiente sección:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346nf.png">
+</p><br>
+
+<p>Ya con todo esto hecho, debería salirnos algo como esto:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346nj.png">
+</p><br>
+
+<p>En este punto, lo único que tendremos que hacer ya es arrancar la máquina y comenzar con la fase de instalación.</p>
+<p>Seleccionaremos el idioma:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346nt.png">
+</p><br>
+
+<p>Desde aquí, habrá que rellenar una serie de datos de ubicación que no creo que haga falta añadir en este Gist (es puro sentido común y no creo que tenga pérdida).</p>
+<p>En la especificación de nombre de máquina, yo pondré <strong>Debian</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346o3.png">
+</p><br>
+
+<p>Cuando nos pregunten por el nombre de dominio, simplemente dejad este campo en blanco:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346o2.png">
+</p><br>
+
+<p>Rellenad en el siguiente paso vuestra clave de superusuario:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346o4.png">
+</p><br>
+
+<p>Tanto en el nombre de usuario como en el nombre de cuenta, como es de obviar... especificaremos nuestro usuario identificativo:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346oe.png">
+</p><br>
+
+<p>Y como es de esperar, nuestra contraseña (para no liarnos yo siempre recomiendo que sea la misma que la clave del superusuario):</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346od.png">
+</p><br>
+
+<p>Ya con esta fase terminada, se nos preguntará por la zona horaria y nuestra ubicación, aquí que cada uno rellene los datos que considere.</p>
+<p>En el particionado de discos, escogeremos la opción de usar todo el disco:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346or.png">
+</p><br>
+
+<p>Deberíamos ver posteriormente algo como esto:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346os.png">
+</p><br>
+
+<p>Una vez hecho, en nuestro caso el esquema de particionado será con todos los ficheros en una partición (posteriormente en nuestro sistema Linux el esquema de particionado será con el /home en otra partición, pero por ahora en nuestro Debian base lo haremos así de simple):</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346ot.png">
+</p><br>
+
+<p>Por último, aplicamos todos los cambios seleccionando la opción '<strong>Finalizar el particionado</strong>':</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346ou.png">
+</p><br>
+
+<p>Seleccionaremos la opción <strong>Sí</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346oL.png">
+</p><br>
+
+<p>En caso de que nos pregunte por otro CD a utilizar, le diremos que no:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346oR.png">
+</p><br>
+
+<p>Y en caso de que nos pregunte por las réplicas de red, de la misma forma seleccionaremos la opción <strong>No</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346oU.png">
+</p><br>
+
+<p>En la selección de programas, nosotros estaremos trabajando con entorno gráfico para estar más cómodos, por tanto... seleccionaremos las siguientes opciones a instalar:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346p2.png">
+</p><br>
+
+<p>Esta fase puede durar unos minutos. Nos preguntará si queremos instalar el cargador de arranque (GRUB), le diremos que sí:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346ps.png">
+</p><br>
+
+<p>Asimismo, indicaremos el dispositivo donde queremos instalar el cargador de arranque, en este caso <strong>/dev/sda</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346pu.png">
+</p><br>
+
+<p>Ya llegados a este punto, habríamos finalizado con toda la fase de instalación y debería salirnos un recuadro como este:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346pV.png">
+</p><br>
+
+<p>Al presionar en '<strong>Continuar</strong>', nuestro Debian debería arrancar sin mayor inconveniente hasta llegar al entorno gráfico:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346q5.png">
+</p><br>
+
+<p>Dado que las proporciones no son las correctas y estaríamos trabajando con una ventana muy chiquita, en el siguiente punto veremos cómo instalar las <strong>VBox Linux Additions</strong>.</p>
+<h4 id="configurando-el-debian-base">Configurando el Debian base</h4>
+<p>Antes de instalar las <strong>Linux Additions</strong> para poder trabajar de manera cómoda, lo que haremos será retocar una línea del archivo <strong>/etc/apt/sources.list</strong>.</p>
+<p>Comentaremos la línea que empieza por '<strong>deb cdrom</strong>', ya que esta de no estar comentada hace que se nos paren las compilaciones más adelante y estaremos trabajando de manera incómoda:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346qT.png">
+</p><br>
+
+<p>De la misma forma, descomentaremos las 2 últimas líneas y antes de estas añadiremos un nuevo <strong>deb</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346rL.png">
+</p><br>
+
+<p>Una vez hecho, aplicaremos el siguiente comando a nivel de sistema:</p>
+<pre class="bash"><code>apt update</code></pre>
+<p>Obteniendo el siguiente output por consola:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346rM.png">
+</p><br>
+
+<p>Esta parte es fundamental pues de lo contrario no nos encontrará los paquetes <strong>build-essential</strong> y <strong>linux-headers-amd64</strong>, necesarios para instalar las <strong>VBoxLinuxAdditions</strong>.</p>
+<p>Aplicamos los siguientes comandos como el usuario <strong>root</strong> para instalar lo previamente citado:</p>
+<pre class="bash"><code>apt install build-essential linux-headers-amd64 -y</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/346sw.png">
+</p><br>
+
+<p>Este proceso puede tardar unos minutos.</p>
+<p>Ahora bien, ¿cómo hacemos para instalar las <strong>VBoxLinuxAdditions</strong>?. En VirtualBox, en la parte superior, contamos con esta utilidad:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346t7.png">
+</p><br>
+
+<p>Al presionarla, desde nuestra máquina virtual deberemos ver lo siguiente:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346t8.png">
+</p><br>
+
+<p>En este punto, deberíamos presionar en 'Ejecutar'. Si vemos un fallo... es normal, no nos asustemos.</p>
+<p>Lo que haremos será de forma manual atender a la siguiente ruta:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346t9.png">
+</p><br>
+
+<p>Eso sí, dado que en esta montura tenemos permisos únicamente de lectura, lo que haremos será crearnos una copia del archivo <strong>VBoxLinuxAdditions.run</strong>, posteriormente le daremos permisos de ejecución y lo ejecutaremos con bash:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346tH.png">
+</p><br>
+
+<p>Para concluir, aplicamos un <strong>reboot</strong> de la siguiente forma:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346tM.png">
+</p><br>
+
+<p>Una vez reiniciado nuestro Debian, el entorno gráfico se nos debería cargar perfectamente en pantalla completa sin mayor inconveniente:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346tX.png">
+</p><br>
+
+<h4 id="instalación-de-paquetes-base">Instalación de paquetes base</h4>
+<p>Lo que haremos a continuación será crear el siguiente script:</p>
+<pre class="bash"><code>cat &gt; version-check.sh &lt;&lt; &quot;EOF&quot;
+#!/bin/bash
+# Simple script to list version numbers of critical development tools
+export LC_ALL=C
+bash --version | head -n1 | cut -d&quot; &quot; -f2-4
+MYSH=$(readlink -f /bin/sh)
+echo &quot;/bin/sh -&gt; $MYSH&quot;
+echo $MYSH | grep -q bash || echo &quot;ERROR: /bin/sh does not point to bash&quot;
+unset MYSH
+
+echo -n &quot;Binutils: &quot;; ld --version | head -n1 | cut -d&quot; &quot; -f3-
+bison --version | head -n1
+
+if [ -h /usr/bin/yacc ]; then
+  echo &quot;/usr/bin/yacc -&gt; `readlink -f /usr/bin/yacc`&quot;;
+elif [ -x /usr/bin/yacc ]; then
+  echo yacc is `/usr/bin/yacc --version | head -n1`
+else
+  echo &quot;yacc not found&quot; 
+fi
+
+bzip2 --version 2&gt;&amp;1 &lt; /dev/null | head -n1 | cut -d&quot; &quot; -f1,6-
+echo -n &quot;Coreutils: &quot;; chown --version | head -n1 | cut -d&quot;)&quot; -f2
+diff --version | head -n1
+find --version | head -n1
+gawk --version | head -n1
+
+if [ -h /usr/bin/awk ]; then
+  echo &quot;/usr/bin/awk -&gt; `readlink -f /usr/bin/awk`&quot;;
+elif [ -x /usr/bin/awk ]; then
+  echo awk is `/usr/bin/awk --version | head -n1`
+else 
+  echo &quot;awk not found&quot; 
+fi
+
+gcc --version | head -n1
+g++ --version | head -n1
+ldd --version | head -n1 | cut -d&quot; &quot; -f2-  # glibc version
+grep --version | head -n1
+gzip --version | head -n1
+cat /proc/version
+m4 --version | head -n1
+make --version | head -n1
+patch --version | head -n1
+echo Perl `perl -V:version`
+python3 --version
+sed --version | head -n1
+tar --version | head -n1
+makeinfo --version | head -n1  # texinfo version
+xz --version | head -n1
+
+echo &#39;int main(){}&#39; &gt; dummy.c &amp;&amp; g++ -o dummy dummy.c
+if [ -x dummy ]
+  then echo &quot;g++ compilation OK&quot;;
+  else echo &quot;g++ compilation failed&quot;; fi
+rm -f dummy.c dummy
+EOF</code></pre>
+<p>Tras su ejecución, lo normal es obtener errores como los que se listan a continuación:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346vL.png">
+</p><br>
+
+<p>Esto es así dado que vamos a tener que ir instalando una serie de dependencias así como de enlaces simbólicos hasta que la ejecución de este script nos diga que está todo correcto. Lo utilizaremos como Checker.</p>
+<p>Lo que haremos será seguir la siguiente filosofía:</p>
+<ul>
+<li>Si el paquete se encuentra instalado, instalaremos el dev [siempre y cuando el paquete disponga del dev]. Si no se encuentra instalado, instalaremos el paquete y el dev.</li>
+</ul>
+<p>¿Qué es esto del dev?, bueno... cada paquete (no todos), suelen venir con una paquetería de desarrollador (-dev o -devel). Estos paquetes adicionales de desarrollador son necesarios para que todo el proceso de construcción de nuestro sistema Linux vaya correctamente.</p>
+<h5 id="bash">Bash</h5>
+<p>Empezaremos por el paquete Bash. Haremos la siguiente comprobación:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346wb.png">
+</p><br>
+
+<p>En este caso, vemos que el paquete ya lo tenía instalado en el sistema. El paquete <strong>Bash</strong> no cuenta con paquetería de desarrollador, por tanto... lo único que aplico conforme a la validación del script que previamente habíamos ejecutado, es un enlace simbólico para que la '<strong>/bin/sh</strong>' apunte a una <strong>Bash</strong>.</p>
+<h5 id="binutils">Binutils</h5>
+<p>Validamos de la misma forma e instalamos su correspondiente paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346wE.png">
+</p><br>
+
+<h5 id="bison">Bison</h5>
+<p>Este paquete no se debería de encontrar instalado en el sistema, por tanto... instalamos y a la vez instalamos su paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346wM.png">
+</p><br>
+
+<h5 id="bzip2">Bzip2</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346x2.png">
+</p><br>
+
+<h5 id="coreutils">Coreutils</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346x8.png">
+</p><br>
+
+<h5 id="diffutils">Diffutils</h5>
+<p>Se encuentra instalado en el sistema y no posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346xB.png">
+</p><br>
+
+<h5 id="findutils">Findutils</h5>
+<p>Se encuentra instalado en el sistema y no posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346xC.png">
+</p><br>
+
+<h5 id="gawk">Gawk</h5>
+<p>Se encuentra instalado en el sistema y no posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346xV.png">
+</p><br>
+
+<h5 id="gcc">Gcc</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346yf.png">
+</p><br>
+
+<h5 id="glibc">Glibc</h5>
+<p>No se encuentra instalado en el sistema y no posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346yk.png">
+</p><br>
+
+<h5 id="grep">Grep</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346yD.png">
+</p><br>
+
+<h5 id="gzip">Gzip</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346yE.png">
+</p><br>
+
+<h5 id="m4">M4</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346zX.png">
+</p><br>
+
+<h5 id="make">Make</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346A7.png">
+</p><br>
+
+<h5 id="patch">Patch</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Ad.png">
+</p><br>
+
+<h5 id="perl">Perl</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Ak.png">
+</p><br>
+
+<h5 id="python">Python</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Ax.png">
+</p><br>
+
+<h5 id="sed">Sed</h5>
+<p>Se encuentra instalado en el sistema y no posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Ay.png">
+</p><br>
+
+<h5 id="tar">Tar</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346AD.png">
+</p><br>
+
+<h5 id="texinfo">Texinfo</h5>
+<p>No se encuentra instalado en el sistema y no posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346By.png">
+</p><br>
+
+<h5 id="xz">Xz</h5>
+<p>Se encuentra instalado en el sistema y posee paquetería de desarrollador:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346AN.png">
+</p><br>
+
+<h4 id="version-check">Version Check</h4>
+<p>Una vez instalados todos los paquetes, ejecutaremos los siguientes comandos para crear una serie de links simbólicos necesarios para que todo funcione correctamente:</p>
+<pre class="bash"><code>ln -svf bison /usr/bin/yacc
+ln -svf gawk /usr/bin/awk</code></pre>
+<p>Ya con esto hecho, ejecutaremos el script <strong>version-check.sh</strong> previamente creado y analizamos si nos da algún error:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346BS.png">
+</p><br>
+
+<p>Como vemos, no se nos reporta ningún error... por lo que podremos continuar. Si en este punto se te arroja algún error, es que has metido la pata en algún sitio y no has instalado correctamente algún paquete necesario.</p>
+<p>¿Mi recomendación en este punto?, crea una instantánea, no vaya a ser que en breve la líes y tengas que volver a empezar desde 0... así por lo menos te das el margen de empezar desde aquí:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346C9.png">
+</p><br>
+
+<h1 id="creando-nueva-partición">Creando nueva partición</h1>
+<p>En este punto, ya con todo lo anterior correctamente configurado, lo que haremos será apagar la máquina virtual. Nos iremos a la configuración de nuestra máquina, y añadiremos un nuevo disco... donde irá el LFS:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Dx.png">
+</p><br
+
+<p>Una vez más, será de tipo <strong>VDI</strong>. En la selección del tipo de almacenamiento en unidad de disco duro física, indicaremos que queremos trabajar con un tamaño fijo:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Dy.png">
+</p><br>
+
+<p>Posteriormente, identificamos el <strong>VDI</strong> donde irá nuestro nuevo sistema Linux con un nombre descriptivo. Yo lo llamaré <strong>S4viOS</strong> (30 GB):</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Dz.png">
+</p><br>
+
+<p>Una vez creado, lo que hacemos es añadirlo justo debajo del ya existente correspondiente al Debian:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346DA.png">
+</p><br>
+
+<p>Una vez añadido, debería verse tal que así:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346DB.png">
+</p><br>
+
+<p>Si arrancamos el Debian, todo debería continuar funcionando correctamente.</p>
+<p>Al aplicar el comando <strong>lsblk</strong>, deberíamos ver una nueva partición en <strong>/dev/sdb</strong>, correspondiente a la que hemos creado para <strong>S4viOS</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346DC.png">
+</p><br>
+
+<p><strong>¡Importante en este punto antes de continuar!</strong>, como de aquí en adelante es probable que nos encontremos con fases de larga espera, lo mejor es quitar esto que nos sale cuando estamos inactivos:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346EU.png">
+</p><br>
+
+<p>No creo que nos haga mucha gracia que en una plena instalación se nos apague de pronto el equipo por inactividad. Para quitar este modo, buscamos '<strong>Energía</strong>' en el buscador de herramientas, y ponemos la siguiente configuración:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346F1.png">
+</p><br>
+
+<h4 id="estructurando-la-partición-con-parted">Estructurando la partición con parted</h4>
+<p>Lo que tenemos que pensar en este punto es lo siguiente, vamos a echar de nuevo un ojo a nuestras particiones:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346DC.png">
+</p><br>
+
+<p>La idea en este punto es dejar <strong>sdb</strong> tal y como se ve <strong>sda</strong>, con el mismo esquema de particiones con la diferencia de que yo en este caso añadiré una partición aparte adicional para el <strong>/home</strong> de nuestro sistema S4viOS por separado.</p>
+<p>Esto lo podemos hacer desde <strong>parted</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Hr.png">
+</p><br>
+
+<p>En este caso, lo único que he hecho ha sido seleccionar la partición con la que quiero trabajar (<strong>sdb</strong>) y he analizado sus propiedades con <strong>print</strong>.</p>
+<p>Si os fijáis, no detecta el label de la tabla de particiones. Vamos a echar un ojo a las propiedades de la partición <strong>sda</strong> ya existente:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Hq.png">
+</p><br>
+
+<p>En este caso el label corresponde a <strong>msdos</strong>. Pues la idea es replicar el mismo "escenario", por tanto... volveremos a nuestra partición <strong>sdb</strong> y aplicaremos estos cambios en el label:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Hs.png">
+</p><br>
+
+<p>Tras volver a hacer un <strong>print</strong>, en este caso ya vemos cómo se lista la información correctamente.</p>
+<p>Ahora bien, lo dicho... iremos creando una serie de particiones, tanto primarias, como extendidas, como lógicas en función de cómo lo queramos nosotros organizar. En mi caso lo organizaré de la siguiente forma:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Ht.png">
+</p><br>
+
+<p>Como vemos, las Flags para cada una de las particiones están identificadas como <strong>lba</strong>, y en la partición <strong>sda</strong> si lo verificáis veréis como esto no es así, únicamente está representada la partición primaria con el Flag <strong>boot</strong>.</p>
+<p>Pues nosotros haremos lo mismo, es decir... copiaremos el esquema:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Hu.png">
+</p><br>
+
+<p>En este punto, lo que recomiendo es comparar <strong>sda</strong> con <strong>sdb</strong> para ver si siguen la misma estructura:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Hv.png">
+</p><br>
+
+<p>Ahora bien, en cuanto a particiones respecta... deberíamos ver algo como esto en estos instantes:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Hw.png">
+</p><br>
+
+<p>Como podréis apreciar, aún no hay UUID's identificativos para las particiones <strong>sdb1, sdb5 y sdb6</strong>. Esto es normal, dado que para ello previamente tenemos que asignar un filesystem a cada una de ellas:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Jt.png">
+</p><br>
+
+<p>Ya con esto hecho, a través del comando <code>lsblk -f</code> podremos sacar los respectivos UUID's de cada una de las particiones. De todas formas, hay un modo más cómodo que sería el siguiente sobre las particiones que nos interesan:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Jw.png">
+</p><br>
+
+<p>¿Qué hacemos con estos UUID's?, pues configurarlos en el '<strong>/etc/fstab</strong>'. Este archivo, por defecto debería alojar el siguiente contenido:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Ju.png">
+</p><br>
+
+<p>Pues lo que nosotros haremos será justamente lo mismo pero para nuestra partición:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Jv.png">
+</p><br>
+
+<p>La raíz de nuestro sistema Linux S4viOS estará definido por la partición primaria, y será desde '<em>/mnt/lfs</em>' donde configuraremos la raíz (aunque ese directorio aún no exista, no nos preocupemos... lo crearemos en breve siguiendo este esquema).</p>
+<p>Por otro lado, especificamos el UUID del SWAP, que correspondería al espacio de intercambio y por último el UUID de la partición que asignaremos a la '<strong>/home</strong>' accesible desde nuestro equipo Debian en '<em>/mnt/lfs/home</em>'.</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Jx.png">
+</p><br>
+
+<p>En este punto, creamos los respectivos directorios definidos en el '<strong>/etc/fstab</strong>', montamos las particiones en dichas rutas y jugamos con <strong>swapon</strong>, ampliamente usado para habilitar/deshabilitar dispositivos y archivos para paginación e intercambio, en este caso sobre nuestro SWAP (<strong>/dev/sdb5</strong>).</p>
+<p>Finalmente, si hacemos un <code>lsblk</code> tal y como se aprecia en la imagen de arriba, deberíamos ver esa misma estructura de particiones. Si esto es así, podremos continuar con las siguientes fases, ¡pero no sin antes crear otra Snapshot!, que nunca se sabe:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/346Jy.png">
+</p><br>
+
+<h1 id="descarga-de-paquetes-para-la-creación-del-sistema-base">Descarga de paquetes para la creación del sistema base</h1>
+<p>Comenzaremos creándonos un directorio en '<em>$LFS/sources</em>':</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/347Pv.png">
+</p><br>
+
+<p>Desde aquí, tendremos que descargar una serie de paquetes los cuales tendremos que ir descomprimiendo y compilando poco a poco.</p>
+<p>Para trabajar rápido, haremos lo siguiente, crearéis un archivo <code>wget-list</code> con el siguiente contenido:</p>
+<pre class="bash"><code>http://download.savannah.gnu.org/releases/attr/attr-2.4.48.tar.gz
+http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.xz
+http://ftp.gnu.org/gnu/automake/automake-1.16.1.tar.xz
+http://ftp.gnu.org/gnu/bash/bash-5.0.tar.gz
+https://github.com/gavinhoward/bc/archive/2.5.3/bc-2.5.3.tar.gz
+http://ftp.gnu.org/gnu/binutils/binutils-2.34.tar.xz
+http://ftp.gnu.org/gnu/bison/bison-3.5.2.tar.xz
+https://www.sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
+https://github.com/libcheck/check/releases/download/0.14.0/check-0.14.0.tar.gz
+http://ftp.gnu.org/gnu/coreutils/coreutils-8.31.tar.xz
+http://ftp.gnu.org/gnu/dejagnu/dejagnu-1.6.2.tar.gz
+http://ftp.gnu.org/gnu/diffutils/diffutils-3.7.tar.xz
+https://downloads.sourceforge.net/project/e2fsprogs/e2fsprogs/v1.45.5/e2fsprogs-1.45.5.tar.gz
+https://sourceware.org/ftp/elfutils/0.178/elfutils-0.178.tar.bz2
+http://download.savannah.gnu.org/releases/acl/acl-2.2.53.tar.gz
+https://dev.gentoo.org/~blueness/eudev/eudev-3.2.9.tar.gz
+https://prdownloads.sourceforge.net/expat/expat-2.2.9.tar.xz
+https://prdownloads.sourceforge.net/expect/expect5.45.4.tar.gz
+ftp://ftp.astron.com/pub/file/file-5.38.tar.gz
+http://ftp.gnu.org/gnu/findutils/findutils-4.7.0.tar.xz
+https://github.com/westes/flex/releases/download/v2.6.4/flex-2.6.4.tar.gz
+http://ftp.gnu.org/gnu/gawk/gawk-5.0.1.tar.xz
+http://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.xz
+http://ftp.gnu.org/gnu/gdbm/gdbm-1.18.1.tar.gz
+http://ftp.gnu.org/gnu/gettext/gettext-0.20.1.tar.xz
+http://ftp.gnu.org/gnu/glibc/glibc-2.31.tar.xz
+http://ftp.gnu.org/gnu/gmp/gmp-6.2.0.tar.xz
+http://ftp.gnu.org/gnu/gperf/gperf-3.1.tar.gz
+http://ftp.gnu.org/gnu/grep/grep-3.4.tar.xz
+http://ftp.gnu.org/gnu/groff/groff-1.22.4.tar.gz
+https://ftp.gnu.org/gnu/grub/grub-2.04.tar.xz
+http://ftp.gnu.org/gnu/gzip/gzip-1.10.tar.xz
+http://anduin.linuxfromscratch.org/LFS/iana-etc-2.30.tar.bz2
+http://ftp.gnu.org/gnu/inetutils/inetutils-1.9.4.tar.xz
+https://launchpad.net/intltool/trunk/0.51.0/+download/intltool-0.51.0.tar.gz
+https://www.kernel.org/pub/linux/utils/net/iproute2/iproute2-5.5.0.tar.xz
+https://www.kernel.org/pub/linux/utils/kbd/kbd-2.2.0.tar.xz
+https://www.kernel.org/pub/linux/utils/kernel/kmod/kmod-26.tar.xz
+http://www.greenwoodsoftware.com/less/less-551.tar.gz
+http://www.linuxfromscratch.org/lfs/downloads/9.1/lfs-bootscripts-20191031.tar.xz
+https://www.kernel.org/pub/linux/libs/security/linux-privs/libcap2/libcap-2.31.tar.xz
+ftp://sourceware.org/pub/libffi/libffi-3.3.tar.gz
+http://download.savannah.gnu.org/releases/libpipeline/libpipeline-1.5.2.tar.gz
+http://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.xz
+https://www.kernel.org/pub/linux/kernel/v5.x/linux-5.5.3.tar.xz
+http://ftp.gnu.org/gnu/m4/m4-1.4.18.tar.xz
+http://ftp.gnu.org/gnu/make/make-4.3.tar.gz
+http://download.savannah.gnu.org/releases/man-db/man-db-2.9.0.tar.xz
+https://www.kernel.org/pub/linux/docs/man-pages/man-pages-5.05.tar.xz
+https://github.com/mesonbuild/meson/releases/download/0.53.1/meson-0.53.1.tar.gz
+https://ftp.gnu.org/gnu/mpc/mpc-1.1.0.tar.gz
+http://www.mpfr.org/mpfr-4.0.2/mpfr-4.0.2.tar.xz
+https://github.com/ninja-build/ninja/archive/v1.10.0/ninja-1.10.0.tar.gz
+http://ftp.gnu.org/gnu/ncurses/ncurses-6.2.tar.gz
+https://www.openssl.org/source/openssl-1.1.1d.tar.gz
+http://ftp.gnu.org/gnu/patch/patch-2.7.6.tar.xz
+https://www.cpan.org/src/5.0/perl-5.30.1.tar.xz
+https://pkg-config.freedesktop.org/releases/pkg-config-0.29.2.tar.gz
+https://sourceforge.net/projects/procps-ng/files/Production/procps-ng-3.3.15.tar.xz
+https://sourceforge.net/projects/psmisc/files/psmisc/psmisc-23.2.tar.xz
+https://www.python.org/ftp/python/3.8.1/Python-3.8.1.tar.xz
+https://www.python.org/ftp/python/doc/3.8.1/python-3.8.1-docs-html.tar.bz2
+http://ftp.gnu.org/gnu/readline/readline-8.0.tar.gz
+http://ftp.gnu.org/gnu/sed/sed-4.8.tar.xz
+https://github.com/shadow-maint/shadow/releases/download/4.8.1/shadow-4.8.1.tar.xz
+http://www.infodrom.org/projects/sysklogd/download/sysklogd-1.5.1.tar.gz
+http://download.savannah.gnu.org/releases/sysvinit/sysvinit-2.96.tar.xz
+http://ftp.gnu.org/gnu/tar/tar-1.32.tar.xz
+https://downloads.sourceforge.net/tcl/tcl8.6.10-src.tar.gz
+http://ftp.gnu.org/gnu/texinfo/texinfo-6.7.tar.xz
+https://www.iana.org/time-zones/repository/releases/tzdata2019c.tar.gz
+http://anduin.linuxfromscratch.org/LFS/udev-lfs-20171102.tar.xz
+https://www.kernel.org/pub/linux/utils/util-linux/v2.35/util-linux-2.35.1.tar.xz
+http://anduin.linuxfromscratch.org/LFS/vim-8.2.0190.tar.gz
+https://cpan.metacpan.org/authors/id/T/TO/TODDR/XML-Parser-2.46.tar.gz
+https://tukaani.org/xz/xz-5.2.4.tar.xz
+https://zlib.net/zlib-1.2.11.tar.xz
+https://github.com/facebook/zstd/releases/download/v1.4.4/zstd-1.4.4.tar.gz
+http://www.linuxfromscratch.org/patches/lfs/9.1/bash-5.0-upstream_fixes-1.patch
+http://www.linuxfromscratch.org/patches/lfs/9.1/bzip2-1.0.8-install_docs-1.patch
+http://www.linuxfromscratch.org/patches/lfs/9.1/coreutils-8.31-i18n-1.patch
+http://www.linuxfromscratch.org/patches/lfs/9.1/glibc-2.31-fhs-1.patch
+http://www.linuxfromscratch.org/patches/lfs/9.1/kbd-2.2.0-backspace-1.patch
+http://www.linuxfromscratch.org/patches/lfs/9.1/sysvinit-2.96-consolidated-1.patch</code></pre>
+<p>De nada. Una vez hecho, lo único que tendréis que hacer es ejecutar el siguiente comando:</p>
+<pre class="bash"><code>wget --input-file=wget-list --continue --directory-prefix=$LFS/sources</code></pre>
+<p>Este proceso puede tardar un buen rato... así que te recomiendo que salgas a dar una vuelta o a despejarte.</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/347Qa.png">
+</p><br>
+
+<p>Nos situaremos en el directorio '<em>$LFS/sources</em>', deberíamos ver algo como esto una vez finalizado:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/3483C.png">
+</p><br>
+
+<p>Es decir, deberíamos tener todos los recursos en un principio descargados.</p>
+<h1 id="construyendo-un-sistema-temporal">Construyendo un sistema temporal</h1>
+<h4 id="creación-de-un-nuevo-usuario">Creación de un nuevo usuario</h4>
+<p>En este punto, comenzaremos creando un directorio <code>tools</code> en '<em>$LFS/tools/</em>', posteriormente... crearemos un usuario a nivel de sistema con nombre <code>lfs</code>, ejecutando para ello los siguientes comandos:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34852.png">
+</p><br>
+
+<p>Será necesario proporcionar una contraseña para el nuevo usuario <code>lfs</code>.</p>
+<p>Una vez hecho, retocaremos el <code>.bash_profile</code> y el <code>.bashrc</code> de este nuevo usuario, adaptando el siguiente contenido:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34853.png">
+</p><br>
+
+<p>Ya con esto definido, aplicamos un <code>source</code> sobre estos 2 archivos y ya podremos continuar:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34854.png">
+</p><br>
+
+<h4 id="compilación-de-paquetes">Compilación de paquetes</h4>
+<p>En este punto, será necesario compilar una serie de paquetes de los previamente descargados a través del archivo <code>wget-list</code>. Recomiendo tener esta guía abierta para copiar y pegar algunos de los comandos, pues estos en ocasiones son algo largos.</p>
+<h5 id="compilación-binutils">Compilación binutils</h5>
+<p>Para comenzar con la compilación de este paquete, lo que haremos será dirigirnos a la ruta '<em>$LFS/sources</em>', descomprimiremos el archivo <code>binutils-2.34.tar.xz</code>, nos meteremos dentro de este y ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>mkdir -v build
+cd build
+
+../configure --prefix=/tools            \
+             --with-sysroot=$LFS        \
+             --with-lib-path=/tools/lib \
+             --target=$LFS_TGT          \
+             --disable-nls              \
+             --disable-werror
+
+make
+
+case $(uname -m) in
+  x86_64) mkdir -v /tools/lib &amp;&amp; ln -sv lib /tools/lib64 ;;
+esac
+
+make install</code></pre>
+<p>Una vez hecho, ya tendríamos esta utilidad instalada... y lo único que tendríamos que hacer es retroceder a nivel de directorios y borrar el mismo:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/3486D.png">
+</p><br>
+
+<h5 id="compilación-gcc">Compilación GCC</h5>
+<p>Este paquete depende a su vez de otros 3 paquetes, así que tras su descompresión, haremos lo siguiente:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/3486N.png">
+</p><br>
+
+<p>Por aquí os dejo los comandos:</p>
+<pre class="bash"><code>tar -xf gcc-9.2.0.tar.xz
+
+cd gcc-9.2.0
+
+tar -xf ../mpfr-4.0.2.tar.xz
+mv -v mpfr-4.0.2 mpfr
+tar -xf ../gmp-6.2.0.tar.xz
+mv -v gmp-6.2.0 gmp
+tar -xf ../mpc-1.1.0.tar.gz
+mv -v mpc-1.1.0 mpc</code></pre>
+<p>Una vez hecho, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>for file in gcc/config/{linux,i386/linux{,64}}.h
+do
+  cp -uv $file{,.orig}
+  sed -e &#39;s@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g&#39; \
+      -e &#39;s@/usr@/tools@g&#39; $file.orig &gt; $file
+  echo &#39;
+#undef STANDARD_STARTFILE_PREFIX_1
+#undef STANDARD_STARTFILE_PREFIX_2
+#define STANDARD_STARTFILE_PREFIX_1 &quot;/tools/lib/&quot;
+#define STANDARD_STARTFILE_PREFIX_2 &quot;&quot;&#39; &gt;&gt; $file
+  touch $file.orig
+done
+
+case $(uname -m) in
+  x86_64)
+    sed -e &#39;/m64=/s/lib64/lib/&#39; \
+        -i.orig gcc/config/i386/t-linux64
+ ;;
+esac
+
+mkdir -v build
+cd build
+
+../configure                                       \
+    --target=$LFS_TGT                              \
+    --prefix=/tools                                \
+    --with-glibc-version=2.11                      \
+    --with-sysroot=$LFS                            \
+    --with-newlib                                  \
+    --without-headers                              \
+    --with-local-prefix=/tools                     \
+    --with-native-system-header-dir=/tools/include \
+    --disable-nls                                  \
+    --disable-shared                               \
+    --disable-multilib                             \
+    --disable-decimal-float                        \
+    --disable-threads                              \
+    --disable-libatomic                            \
+    --disable-libgomp                              \
+    --disable-libquadmath                          \
+    --disable-libssp                               \
+    --disable-libvtv                               \
+    --disable-libstdcxx                            \
+    --enable-languages=c,c++
+
+make
+make install</code></pre>
+<p><strong>Anotación</strong>: Este paquete puede tardar un poco en instalarse, así que paciencia.</p>
+<p>Una vez instalado, podremos retroceder a nivel de directorios y borrar el recurso descomprimido sin mayor inconveniente:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/3489L.png">
+</p><br>
+
+<h5 id="compilación-api-headers">Compilación API Headers</h5>
+<p>En este caso, descomprimiremos el archivo <code>linux-5.5.3.tar.xz</code> y ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>make mrproper
+make headers
+cp -rv usr/include/* /tools/include
+cd ..
+rm -rf linux-5.5.3</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/348ac.png">
+</p><br>
+
+<h5 id="compilación-glibc">Compilación Glibc</h5>
+<p>Para la instalación de <strong>Glibc</strong>, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>tar -xf glibc-2.31.tar.xz
+mkdir -v build
+cd       build
+
+../configure                             \
+      --prefix=/tools                    \
+      --host=$LFS_TGT                    \
+      --build=$(../scripts/config.guess) \
+      --enable-kernel=3.2                \
+      --with-headers=/tools/include
+
+make
+make install</code></pre>
+<p>Una vez hecho, aplicaremos el siguiente comando para validar que las funciones básicas (compilación y linking) de la nueva toolchain están trabajando correctamente:</p>
+<pre class="bash"><code>echo &#39;int main(){}&#39; &gt; dummy.c
+$LFS_TGT-gcc dummy.c
+readelf -l a.out | grep &#39;: /tools&#39;</code></pre>
+<p>Si al ejecutarlo nos sale el siguiente mensaje:</p>
+<pre class="bash"><code>[Requesting program interpreter: /tools/lib64/ld-linux-x86-64.so.2]</code></pre>
+<p>Entonces nos podremos quedar tranquilos. Posteriormente, borramos estos archivos:</p>
+<pre class="bash"><code>rm -v dummy.c a.out
+cd ../..
+rm -rf glibc-2.31</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/348ei.png">
+</p><br>
+
+<p>Ojo cuidado, ¡hagamos una Snapshot que ya hemos avanzado considerablemente!:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348ev.png">
+</p><br>
+
+<h5 id="compilación-libstdc-de-gcc">Compilación Libstdc de GCC</h5>
+<p>Para instalar esta utilidad, necesitaremos volver a descomprimir el archivo <code>gcc-9.2.0.tar.xz</code> una vez más. Una vez hecho, aplicaremos los siguientes comandos dentro del directorio descomprimido:</p>
+<pre class="bash"><code>mkdir -v build
+cd build
+
+../libstdc++-v3/configure           \
+    --host=$LFS_TGT                 \
+    --prefix=/tools                 \
+    --disable-multilib              \
+    --disable-nls                   \
+    --disable-libstdcxx-threads     \
+    --disable-libstdcxx-pch         \
+    --with-gxx-include-dir=/tools/$LFS_TGT/include/c++/9.2.0
+
+make
+make install</code></pre>
+<p>Una vez finalizado, como siempre... retrocedemos 2 directorios y borramos el directorio:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348kG.png">
+</p><br>
+
+<h5 id="compilación-binutils-fase-2">Compilación Binutils Fase 2</h5>
+<p>Una vez más, volveremos a descomprimir el comprimido <code>binutils-2.34.tar.xz</code> y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>tar -xf binutils-2.34.tar.xz
+cd binutils-2.34
+
+mkdir -v build
+cd build
+
+CC=$LFS_TGT-gcc                \
+AR=$LFS_TGT-ar                 \
+RANLIB=$LFS_TGT-ranlib         \
+../configure                   \
+    --prefix=/tools            \
+    --disable-nls              \
+    --disable-werror           \
+    --with-lib-path=/tools/lib \
+    --with-sysroot
+
+make
+make install
+
+make -C ld clean
+make -C ld LIB_PATH=/usr/lib:/lib
+cp -v ld/ld-new /tools/bin</code></pre>
+<p>Una vez hecho, la misma historia de siempre... retrocedemos 2 directorios y borramos el directorio:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348nQ.png">
+</p><br>
+
+<h5 id="compilación-gcc-fase-2">Compilación GCC Fase 2</h5>
+<p>Descomprimiremos una vez más el archivo <code>gcc-9.2.0.tar.xz</code> y aplicaremos los siguientes comandos a nivel de sistema:</p>
+<pre class="bash"><code>cat gcc/limitx.h gcc/glimits.h gcc/limity.h &gt; \
+  `dirname $($LFS_TGT-gcc -print-libgcc-file-name)`/include-fixed/limits.h
+
+for file in gcc/config/{linux,i386/linux{,64}}.h
+do
+  cp -uv $file{,.orig}
+  sed -e &#39;s@/lib\(64\)\?\(32\)\?/ld@/tools&amp;@g&#39; \
+      -e &#39;s@/usr@/tools@g&#39; $file.orig &gt; $file
+  echo &#39;
+#undef STANDARD_STARTFILE_PREFIX_1
+#undef STANDARD_STARTFILE_PREFIX_2
+#define STANDARD_STARTFILE_PREFIX_1 &quot;/tools/lib/&quot;
+#define STANDARD_STARTFILE_PREFIX_2 &quot;&quot;&#39; &gt;&gt; $file
+  touch $file.orig
+done
+
+case $(uname -m) in
+  x86_64)
+    sed -e &#39;/m64=/s/lib64/lib/&#39; \
+        -i.orig gcc/config/i386/t-linux64
+  ;;
+esac
+
+tar -xf ../mpfr-4.0.2.tar.xz
+mv -v mpfr-4.0.2 mpfr
+tar -xf ../gmp-6.2.0.tar.xz
+mv -v gmp-6.2.0 gmp
+tar -xf ../mpc-1.1.0.tar.gz
+mv -v mpc-1.1.0 mpc
+
+sed -e &#39;1161 s|^|//|&#39; \
+    -i libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.cc
+
+mkdir -v build
+cd build</code></pre>
+<p>Toda esta parte debería devolver un output limpio como el siguiente:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348ou.png">
+</p><br>
+
+<p>Llegados a este punto ejecutamos los siguientes comandos:</p>
+<pre class="bash"><code>CC=$LFS_TGT-gcc                                    \
+CXX=$LFS_TGT-g++                                   \
+AR=$LFS_TGT-ar                                     \
+RANLIB=$LFS_TGT-ranlib                             \
+../configure                                       \
+    --prefix=/tools                                \
+    --with-local-prefix=/tools                     \
+    --with-native-system-header-dir=/tools/include \
+    --enable-languages=c,c++                       \
+    --disable-libstdcxx-pch                        \
+    --disable-multilib                             \
+    --disable-bootstrap                            \
+    --disable-libgomp
+
+make
+make install
+ln -sv gcc /tools/bin/cc</code></pre>
+<p>Igual que hicimos la primera vez, tendremos que validar que las funciones básicas (compilación y linking) de la nueva toolchain están funcionando correctamente:</p>
+<pre class="bash"><code>echo &#39;int main(){}&#39; &gt; dummy.c
+cc dummy.c
+readelf -l a.out | grep &#39;: /tools&#39;</code></pre>
+<p>Teniendo que ver un output como el siguiente:</p>
+<pre class="bash"><code>[Requesting program interpreter: /tools/lib64/ld-linux-x86-64.so.2]</code></pre>
+<p>Si eso es así, buen trabajo. Eliminamos los ficheros y directorios innecesarios:</p>
+<pre class="bash"><code>rm -v dummy.c a.out
+cd ../..
+rm -rf gcc-9.2.0</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/348qv.png">
+</p><br>
+
+<h5 id="compilación-tcl">Compilación Tcl</h5>
+<p>Para la instalación de este paquete, tendremos que descomprimir el comprimido <code>tcl8.6.10-src.tar.gz</code>. Posteriormente, ejecutaremos los siguientes comandos dentro del directorio:</p>
+<pre class="bash"><code>cd unix
+
+./configure --prefix=/tools
+
+make
+TZ=UTC make test
+make install
+
+chmod -v u+w /tools/lib/libtcl8.6.so
+make install-private-headers
+ln -sv tclsh8.6 /tools/bin/tclsh</code></pre>
+<p>Una vez terminado, retrocedemos 2 directorios y borramos el directorio:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348rB.png">
+</p><br>
+
+<h5 id="compilación-expect">Compilación Expect</h5>
+<p>Para la instalación de este paquete, tendremos que descomprimir el comprimido <code>expect5.45.4.tar.gz</code>, posteriormente, ejecutaremos los siguientes comandos dentro del directorio:</p>
+<pre class="bash"><code>cp -v configure{,.orig}
+sed &#39;s:/usr/local/bin:/bin:&#39; configure.orig &gt; configure
+
+./configure --prefix=/tools       \
+            --with-tcl=/tools/lib \
+            --with-tclinclude=/tools/include
+
+make
+make test
+make SCRIPTS=&quot;&quot; install</code></pre>
+<p>Una vez finalizado, retrocedemos 1 directorio y borramos el directorio principal:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348s6.png">
+</p><br>
+
+<h5 id="compilación-dejagnu">Compilación DejaGNU</h5>
+<p>La instalación de este paquete es bastante rápida. En primer lugar, descomprimimos el comprimido <code>dejagnu-1.6.2.tar.gz</code>. Posteriormente, ejecutamos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+make install
+make check</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348sm.png">
+</p><br>
+
+<h5 id="compilación-m4">Compilación M4</h5>
+<p>Para instalar este paquete, descomprimiremos el comprimido <code>m4-1.4.18.tar.xz</code>, nos meteremos en el directorio descomprimido y efectuaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;s/IO_ftrylockfile/IO_EOF_SEEN/&#39; lib/*.c
+echo &quot;#define _IO_IN_BACKUP 0x100&quot; &gt;&gt; lib/stdio-impl.h
+
+./configure --prefix=/tools
+
+make
+make check
+make install</code></pre>
+<p>Durante el <code>make check</code>, deberíamos ver algo como esto:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348tc.png">
+</p><br>
+
+<p>Una vez finalizada la instalación, retrocedemos un directorio y borramos el directorio principal:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348td.png">
+</p><br>
+
+<h5 id="compilación-ncurses">Compilación Ncurses</h5>
+<p>Para instalar este paquete, necesitaremos descomprimir el comprimido con nombre <code>ncurses-6.2.tar.gz</code>. Una vez hecho, aplicaremos los siguientes comandos dentro del directorio descomprimido:</p>
+<pre class="bash"><code>sed -i s/mawk// configure
+
+./configure --prefix=/tools \
+            --with-shared   \
+            --without-debug \
+            --without-ada   \
+            --enable-widec  \
+            --enable-overwrite
+
+make
+make install
+ln -s libncursesw.so /tools/lib/libncurses.so</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Ncurses.</p>
+<h5 id="compilación-bash">Compilación Bash</h5>
+<p>Para instalar este paquete, necesitaremos descomprimir el comprimido con nombre <code>bash-5.0.tar.gz</code>. Una vez hecho, ejecutaremos los siguientes comandos dentro del directorio descomprimido:</p>
+<pre class="bash"><code>./configure --prefix=/tools --without-bash-malloc
+make
+make tests
+make install
+ln -sv bash /tools/bin/sh</code></pre>
+<p>Una vez hecho, retrocederemos un directorio y borraremos el directorio principal de Bash:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348v6.png">
+</p><br>
+
+<h5 id="compilación-bison">Compilación Bison</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>bison-3.5.2.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+
+make
+make check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Bison:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348w3.png">
+</p><br>
+
+<h5 id="compilación-bzip2">Compilación Bzip2</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>bzip2-1.0.8.tar.gz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>make -f Makefile-libbz2_so
+make clean
+
+make
+
+make PREFIX=/tools install
+cp -v bzip2-shared /tools/bin/bzip2
+cp -av libbz2.so* /tools/lib
+ln -sv libbz2.so.1.0 /tools/lib/libbz2.so</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Bzip2:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348wj.png">
+</p><br>
+
+<h5 id="compilación-coreutils">Compilación Coreutils</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>coreutils-8.31.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools --enable-install-program=hostname
+
+make
+make RUN_EXPENSIVE_TESTS=yes check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Coreutils:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348xi.png">
+</p><br>
+
+<h5 id="compilación-diffutils">Compilación Diffutils</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>diffutils-3.7.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+make
+make check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Diffutils:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348xB.png">
+</p><br>
+
+<h5 id="compilación-file">Compilación File</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>file-5.38.tar.gz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+make
+make check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de File:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348xH.png">
+</p><br>
+
+<h5 id="compilación-findutils">Compilación Findutils</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>findutils-4.7.0.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+make
+make check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Findutils:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348y1.png">
+</p><br>
+
+<p>Bueno, en este punto... como ya hemos avanzado considerablemente, ¡toca hacer otro Snapshot!:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/348yu.png">
+</p><br>
+
+<h5 id="compilación-gawk">Compilación Gawk</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>gawk-5.0.1.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+make
+make check
+make install</code></pre>
+<p><strong>Importante</strong>: Es probable que el <code>make check</code> devuelva errores, pero no hay de qué preocuparse.</p>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Gawk:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349ii.png">
+</p><br>
+
+<h5 id="compilación-gettext">Compilación Gettext</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>gettext-0.20.1.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --disable-shared
+make
+cp -v gettext-tools/src/{msgfmt,msgmerge,xgettext} /tools/bin</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Gettext:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349iX.png">
+</p><br>
+
+<h5 id="compilación-grep">Compilación Grep</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>grep-3.4.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+
+make
+make check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Grep:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349jf.png">
+</p><br>
+
+<h5 id="compilación-gzip">Compilación Gzip</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>gzip-1.10.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+
+make
+make check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Gzip:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349jy.png">
+</p><br>
+
+<h5 id="compilación-make">Compilación Make</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>make-4.3.tar.gz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools --without-guile
+
+make
+make check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Make:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349jQ.png">
+</p><br>
+
+<h5 id="compilación-patch">Compilación Patch</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>patch-2.7.6.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+
+make
+make check
+make install</code></pre>
+<p>En este paquete, a la hora de hacer un <code>make check</code>, es posible que el campo <strong>XFAIL</strong> devuelve 2 errores, esto es normal y no habrá de qué preocuparse.</p>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Patch:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349k9.png">
+</p><br>
+
+<h5 id="compilación-perl">Compilación Perl</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>perl-5.30.1.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>sh Configure -des -Dprefix=/tools -Dlibs=-lm -Uloclibpth -Ulocincpth
+
+make
+cp -v perl cpan/podlators/scripts/pod2man /tools/bin
+mkdir -pv /tools/lib/perl5/5.30.1
+cp -Rv lib/* /tools/lib/perl5/5.30.1</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Perl:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349kE.png">
+</p><br>
+
+<h5 id="compilación-python">Compilación Python</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>Python-3.8.1.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;/def add_multiarch_paths/a \        return&#39; setup.py
+./configure --prefix=/tools --without-ensurepip
+make
+make install</code></pre>
+<p><strong>Anotación</strong>: Si al hacer un <code>make install</code> en la fase final da un error, lo que habrá que hacer será volver a descomprimir el comprimido de Python y esta vez en el archivo <code>setup.py</code>, nos iremos nosotros manualmente a la línea que pone <code>add_multiarch_paths</code>. Una vez situados, justamente debajo de la función, correctamente tabulado pondremos la palabra <code>return</code>.</p>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Python:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349mg.png">
+</p><br>
+
+<h5 id="compilación-sed">Compilación Sed</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>sed-4.8.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+make
+make check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Sed:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349mu.png">
+</p><br>
+
+<h5 id="compilación-tar">Compilación Tar</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>tar-1.32.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+make
+make check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Tar:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349n3.png">
+</p><br>
+
+<h5 id="compilación-texinfo">Compilación Texinfo</h5>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>texinfo-6.7.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+make
+make check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Texinfo:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349oM.png">
+</p><br>
+
+<h5 id="compilación-xz">Compilación Xz</h5>
+<p>Madre mía, último paquete a instalar... si señor, buen trabajo. Aún así prepárate, que luego vendrán muchos más.</p>
+<p>Para la compilación de este paquete, haremos uso del paquete <code>xz-5.2.4.tar.xz</code>. Una vez descomprimido, nos meteremos dentro del directorio descomprimido y aplicaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/tools
+make
+make check
+make install</code></pre>
+<p>Una vez hecho, retrocedemos un directorio y borramos el directorio principal de Xz:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349p5.png">
+</p><br>
+
+<h4 id="stripping">Stripping</h4>
+<p>Este apartado es totalmente opcional, irá destinado a eliminar elementos innecesarios. Pensemos en que los ejecutables y las bibliotecas construidas hasta ahora contienen aproximadamente unos 70 MB de símbolos de depuración innecesarios.</p>
+<p>Para eliminar estos símbolos, podemos ejecutar el siguiente comando:</p>
+<pre class="bash"><code>strip --strip-debug /tools/lib/*
+/usr/bin/strip --strip-unneeded /tools/{,s}bin/*</code></pre>
+<p>Para salvar más espacio, eliminaremos las documentaciones y archivos innecesarios:</p>
+<pre class="bash"><code>rm -rf /tools/{,share}/{info,man,doc}
+find /tools/{lib,libexec} -name \*.la -delete</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/349pq.png">
+</p><br>
+
+<p>En este punto, toca hacer una nueva Snapshot antes de continuar:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349pt.png">
+</p><br>
+
+<h4 id="cambio-de-propietario">Cambio de Propietario</h4>
+<p>Actualmente, la ruta '<em>$LFS/tools</em>' tiene como propietario asignado al usuario <strong>lfs</strong>, un usuario que existe sólo en el sistema host.</p>
+<p>Lo que haremos por el momento será cambiar el propietario y el grupo asignado de forma recursiva al usuario <strong>root</strong>, de la siguiente forma:</p>
+<pre class="bash"><code>chown -R root:root $LFS/tools</code></pre>
+<p><strong>IMPORTANTE</strong>: Esto hay que hacerlo como el usuario <code>root</code>, por tanto, ejecutamos primero el comando <strong>exit</strong> para salir de la sesión del usuario <code>lfs</code>.</p>
+<h1 id="construyendo-el-sistema-lfs">Construyendo el sistema LFS</h1>
+<h4 id="preparando-el-sistema-de-archivos-del-kernel-virtual">Preparando el sistema de archivos del kernel virtual</h4>
+<p>Comenzaremos creando los directorios en los que se montarán los sistemas de archivos:</p>
+<pre class="bash"><code>mkdir -pv $LFS/{dev,proc,sys,run}</code></pre>
+<p>Cuando el kernel arranca el sistema, se requiere de la presencia de unos pocos nodos de dispositivo, en particular los dispositivos <code>console</code> y <code>nul</code>. Estos nodos del dispositivo deben crearse en el disco duro para que estén disponibles antes de que se inicie <code>udevd</code> y, además, cuando se inicie Linux <code>init=/bin/bash</code>.</p>
+<p>Podemos crear estos dispositivos ejecutando los siguientes comandos:</p>
+<pre class="bash"><code>mknod -m 600 $LFS/dev/console c 5 1
+mknod -m 666 $LFS/dev/null c 1 3</code></pre>
+<p>Ya en este punto, crearemos un sistema de archivos virtual en el directorio <code>/dev</code> para permitir que los dispositivos se creen dinámicamente a medida que estos son detectados o accedidos:</p>
+<pre class="bash"><code>mount -v --bind /dev $LFS/dev</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/349qt.png">
+</p><br>
+
+<h4 id="montaje-del-sistema-de-archivos-del-kernel-virtual">Montaje del sistema de archivos del kernel virtual</h4>
+<p>En este punto, montaremos los sistemas de archivos del kernel virtual restantes:</p>
+<pre class="bash"><code>mount -vt devpts devpts $LFS/dev/pts -o gid=5,mode=620
+mount -vt proc proc $LFS/proc
+mount -vt sysfs sysfs $LFS/sys
+mount -vt tmpfs tmpfs $LFS/run</code></pre>
+<p>En algunos sistemas host, <code>/dev/shm</code> es un enlace simbólico a <code>/run/shm</code>. El <code>tmpfs</code> <strong>/run</strong> fue montado arriba, por tanto en este caso... sólo es necesario crear un directorio:</p>
+<pre class="bash"><code>if [ -h $LFS/dev/shm ]; then
+  mkdir -pv $LFS/$(readlink $LFS/dev/shm)
+fi</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/349qC.png">
+</p><br>
+
+<h4 id="entrando-en-el-entorno-chroot">Entrando en el entorno Chroot</h4>
+<p>A partir de aquí, ingresaremos al entorno chroot para comenzar a construir e instalar nuestro sistema Linux final.</p>
+<p>Como el usuario <strong>root</strong>, ejecutaremos el siguiente comando:</p>
+<pre class="bash"><code>chroot &quot;$LFS&quot; /tools/bin/env -i \
+    HOME=/root                  \
+    TERM=&quot;$TERM&quot;                \
+    PS1=&#39;(lfs chroot) \u:\w\$ &#39; \
+    PATH=/bin:/usr/bin:/sbin:/usr/sbin:/tools/bin \
+    /tools/bin/bash --login +h</code></pre>
+<p>Una vez ejecutado, deberíamos ver algo como esto:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349qP.png">
+</p><br>
+
+<p>Como vemos, en '<em>/sources</em>' deberíamos ver todos nuestros archivos comprimidos que habíamos obtenido del archivo <strong>wget-list</strong>.</p>
+<p>Si esto es así, podremos continuar.</p>
+<h5 id="creación-de-directorios">Creación de directorios</h5>
+<p>Antes de continuar, será necesario crear una estructura base para el sistema de archivos de nuestro sistema Linux. Crearemos un árbol estándar de directorios ejecutando los siguientes comandos:</p>
+<pre class="bash"><code>mkdir -pv /{bin,boot,etc/{opt,sysconfig},home,lib/firmware,mnt,opt}
+mkdir -pv /{media/{floppy,cdrom},sbin,srv,var}
+install -dv -m 0750 /root
+install -dv -m 1777 /tmp /var/tmp
+mkdir -pv /usr/{,local/}{bin,include,lib,sbin,src}
+mkdir -pv /usr/{,local/}share/{color,dict,doc,info,locale,man}
+mkdir -v  /usr/{,local/}share/{misc,terminfo,zoneinfo}
+mkdir -v  /usr/libexec
+mkdir -pv /usr/{,local/}share/man/man{1..8}
+mkdir -v  /usr/lib/pkgconfig
+
+case $(uname -m) in
+ x86_64) mkdir -v /lib64 ;;
+esac
+
+mkdir -v /var/{log,mail,spool}
+ln -sv /run /var/run
+ln -sv /run/lock /var/lock
+mkdir -pv /var/{opt,cache,lib/{color,misc,locate},local}</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/349rN.png">
+</p><br>
+
+<h5 id="creación-de-archivos-esenciales-y-links-simbólicos">Creación de archivos esenciales y Links Simbólicos</h5>
+<p>Algunos programas usan rutas "cableadas" a programas que aún no existen. Para satisfacer la accesibilidad de estos programas, crearemos una serie de enlaces simbólicos los cuales serán reemplazados por archivos reales:</p>
+<pre class="bash"><code>ln -sv /tools/bin/{bash,cat,chmod,dd,echo,ln,mkdir,pwd,rm,stty,touch} /bin
+ln -sv /tools/bin/{env,install,perl,printf}         /usr/bin
+ln -sv /tools/lib/libgcc_s.so{,.1}                  /usr/lib
+ln -sv /tools/lib/libstdc++.{a,so{,.6}}             /usr/lib
+ln -sv bash /bin/sh</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/349rQ.png">
+</p><br>
+
+<p>Una vez hecho, para satisfacer las utilidades que esperan la presencia de <code>/etc/mtab</code>, crearemos otro enlace simbólico:</p>
+<pre class="bash"><code>ln -sv /proc/self/mounts /etc/mtab</code></pre>
+<p>Para que el usuario <strong>root</strong> pueda iniciar sesión y para que se reconozca el nombre <strong>root</strong>, deben de haber entradas relevantes en los archivos '<em>/etc/passwd</em>' y '<em>/etc/group</em>'.</p>
+<p>Crearemos estos archivos de la siguiente forma:</p>
+<pre class="bash"><code>cat &gt; /etc/passwd &lt;&lt; &quot;EOF&quot;
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/dev/null:/bin/false
+daemon:x:6:6:Daemon User:/dev/null:/bin/false
+messagebus:x:18:18:D-Bus Message Daemon User:/var/run/dbus:/bin/false
+nobody:x:99:99:Unprivileged User:/dev/null:/bin/false
+EOF
+
+cat &gt; /etc/group &lt;&lt; &quot;EOF&quot;
+root:x:0:
+bin:x:1:daemon
+sys:x:2:
+kmem:x:3:
+tape:x:4:
+tty:x:5:
+daemon:x:6:
+floppy:x:7:
+disk:x:8:
+lp:x:9:
+dialout:x:10:
+audio:x:11:
+video:x:12:
+utmp:x:13:
+usb:x:14:
+cdrom:x:15:
+adm:x:16:
+messagebus:x:18:
+input:x:24:
+mail:x:34:
+kvm:x:61:
+wheel:x:97:
+nogroup:x:99:
+users:x:999:
+EOF</code></pre>
+<p>Por último, para eliminar la cadena <strong>I have no name!</strong>, iniciaremos una nueva shell:</p>
+<pre class="bash"><code>exec /tools/bin/bash --login +h</code></pre>
+<p>Todo este proceso, debería verse de la siguiente forma:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349rP.png">
+</p><br>
+
+<p>Al final de la imagen, lo que he hecho ha sido inicializar los archivos de registro y asignarles los permisos adecuados, serían estos comandos:</p>
+<pre class="bash"><code>touch /var/log/{btmp,lastlog,faillog,wtmp}
+chgrp -v utmp /var/log/lastlog
+chmod -v 664  /var/log/lastlog
+chmod -v 600  /var/log/btmp</code></pre>
+<h4 id="instalación-del-software-básico-del-sistema">Instalación del Software básico del sistema</h4>
+<p>Comienza una nueva labor de compilación, esta vez en el entorno chroot. Si la anterior nos pareció larga... en esta sí que habrá que armarse de paciencia, porque será el triple de larga.</p>
+<p>Os iré definiendo por cada paquete los comandos que tendréis que ir ejecutando a nivel de sistema. La compilación de estos paquetes si seguís paso a paso los comandos no os deberían de dar error (salvo algún que otro <code>make check</code>, pero por lo demás las instalaciones se deberían realizar correctamente).</p>
+<p>Antes de proseguir, deberemos situarnos en el directorio <code>/sources</code>, que es donde se sitúan todos los comprimidos.</p>
+<h5 id="api-headers-en-lfs">API Headers en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>make mrproper
+
+make headers
+find usr/include -name &#39;.*&#39; -delete
+rm usr/include/Makefile
+cp -rv usr/include/* /usr/include</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="man-pages-en-lfs">Man pages en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos el siguiente comando:</p>
+<pre class="bash"><code>make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="glibc-en-lfs">Glibc en LFS</h5>
+<p><strong>AVISO:</strong> La compilación e instalación de este paquete puede demorar bastante tiempo, así que tendréis que salir un poco a tomar el aire. Asimismo, la fase del <code>make check</code> es normal que de algún que otro fallo, pero no hay de qué preocuparse.</p>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>patch -Np1 -i ../glibc-2.31-fhs-1.patch
+
+case $(uname -m) in
+    i?86)   ln -sfv ld-linux.so.2 /lib/ld-lsb.so.3
+    ;;
+    x86_64) ln -sfv ../lib/ld-linux-x86-64.so.2 /lib64
+            ln -sfv ../lib/ld-linux-x86-64.so.2 /lib64/ld-lsb-x86-64.so.3
+    ;;
+esac
+
+mkdir -v build
+cd       build
+
+CC=&quot;gcc -ffile-prefix-map=/tools=/usr&quot; \
+../configure --prefix=/usr                          \
+             --disable-werror                       \
+             --enable-kernel=3.2                    \
+             --enable-stack-protector=strong        \
+             --with-headers=/usr/include            \
+             libc_cv_slibdir=/lib
+
+make
+
+case $(uname -m) in
+  i?86)   ln -sfnv $PWD/elf/ld-linux.so.2        /lib ;;
+  x86_64) ln -sfnv $PWD/elf/ld-linux-x86-64.so.2 /lib ;;
+esac
+
+make check
+
+touch /etc/ld.so.conf
+sed &#39;/test-installation/s@$(PERL)@echo not running@&#39; -i ../Makefile
+make install
+cp -v ../nscd/nscd.conf /etc/nscd.conf
+mkdir -pv /var/cache/nscd</code></pre>
+<p>Deberíais poder llegar hasta aquí sin problemas:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349xv.png">
+</p><br>
+
+<p>Ahora bien, toca instalar las configuraciones regionales. Ejecutaremos estos comandos:</p>
+<pre class="bash"><code>mkdir -pv /usr/lib/locale
+localedef -i POSIX -f UTF-8 C.UTF-8 2&gt; /dev/null || true
+localedef -i cs_CZ -f UTF-8 cs_CZ.UTF-8
+localedef -i de_DE -f ISO-8859-1 de_DE
+localedef -i de_DE@euro -f ISO-8859-15 de_DE@euro
+localedef -i de_DE -f UTF-8 de_DE.UTF-8
+localedef -i el_GR -f ISO-8859-7 el_GR
+localedef -i en_GB -f UTF-8 en_GB.UTF-8
+localedef -i en_HK -f ISO-8859-1 en_HK
+localedef -i en_PH -f ISO-8859-1 en_PH
+localedef -i en_US -f ISO-8859-1 en_US
+localedef -i en_US -f UTF-8 en_US.UTF-8
+localedef -i es_MX -f ISO-8859-1 es_MX
+localedef -i fa_IR -f UTF-8 fa_IR
+localedef -i fr_FR -f ISO-8859-1 fr_FR
+localedef -i fr_FR@euro -f ISO-8859-15 fr_FR@euro
+localedef -i fr_FR -f UTF-8 fr_FR.UTF-8
+localedef -i it_IT -f ISO-8859-1 it_IT
+localedef -i it_IT -f UTF-8 it_IT.UTF-8
+localedef -i ja_JP -f EUC-JP ja_JP
+localedef -i ja_JP -f SHIFT_JIS ja_JP.SIJS 2&gt; /dev/null || true
+localedef -i ja_JP -f UTF-8 ja_JP.UTF-8
+localedef -i ru_RU -f KOI8-R ru_RU.KOI8-R
+localedef -i ru_RU -f UTF-8 ru_RU.UTF-8
+localedef -i tr_TR -f UTF-8 tr_TR.UTF-8
+localedef -i zh_CN -f GB18030 zh_CN.GB18030
+localedef -i zh_HK -f BIG5-HKSCS zh_HK.BIG5-HKSCS</code></pre>
+<p>Y por último, este otro comando, el cual puede llevar bastante tiempo:</p>
+<pre class="bash"><code>make localedata/install-locales</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/349xN.png">
+</p><br>
+
+<p>Una vez hecho, crearemos un nuevo archivo '<em>/etc/nsswitch.conf</em>' aplicando el siguiente comando:</p>
+<pre class="bash"><code>cat &gt; /etc/nsswitch.conf &lt;&lt; &quot;EOF&quot;
+# Begin /etc/nsswitch.conf
+
+passwd: files
+group: files
+shadow: files
+
+hosts: files dns
+networks: files
+
+protocols: files
+services: files
+ethers: files
+rpc: files
+
+# End /etc/nsswitch.conf
+EOF</code></pre>
+<p>Este archivo es necesario dado que los valores predeterminados <strong>Glibc</strong> no funcionan correctamente en un entorno de red.</p>
+<p>Añadiremos los datos relacionados con la zona horaria ejecutando los siguientes comandos:</p>
+<pre class="bash"><code>tar -xf ../../tzdata2019c.tar.gz
+
+ZONEINFO=/usr/share/zoneinfo
+mkdir -pv $ZONEINFO/{posix,right}
+
+for tz in etcetera southamerica northamerica europe africa antarctica  \
+          asia australasia backward pacificnew systemv; do
+    zic -L /dev/null   -d $ZONEINFO       ${tz}
+    zic -L /dev/null   -d $ZONEINFO/posix ${tz}
+    zic -L leapseconds -d $ZONEINFO/right ${tz}
+done
+
+cp -v zone.tab zone1970.tab iso3166.tab $ZONEINFO
+zic -d $ZONEINFO -p America/New_York
+unset ZONEINFO</code></pre>
+<p>Ya en este punto, ejecutaremos el siguiente comando:</p>
+<pre><code>tzselect</code></pre>
+<p>En mi caso estoy en Canarias, por tanto seleccionaré las siguientes opciones:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349zC.png">
+</p><br>
+
+<p>Una vez seleccionadas estas opciones, crearemos el siguiente enlace simbólico con el nombre de la zona horaria previamente seleccionada:</p>
+<pre class="bash"><code>ln -sfv /usr/share/zoneinfo/&lt;xxx&gt; /etc/localtime</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/349zH.png">
+</p><br>
+
+<p>Por último, configuraremos el cargador dinámico:</p>
+<pre class="bash"><code>cat &gt; /etc/ld.so.conf &lt;&lt; &quot;EOF&quot;
+# Begin /etc/ld.so.conf
+/usr/local/lib
+/opt/lib
+
+EOF
+
+cat &gt;&gt; /etc/ld.so.conf &lt;&lt; &quot;EOF&quot;
+# Add an include directory
+include /etc/ld.so.conf.d/*.conf
+
+EOF
+mkdir -pv /etc/ld.so.conf.d</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/349zW.png">
+</p><br>
+
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="ajuste-de-la-toolchain">Ajuste de la Toolchain</h5>
+<p>Ahora que se han instalado las bibliotecas de C finales, es hora de ajustar la cadena de herramientas para que se vincule cualquier programa recién compilado con estas bibliotecas nuevas.</p>
+<p>Ejecutamos los siguientes comandos:</p>
+<pre class="bash"><code>mv -v /tools/bin/{ld,ld-old}
+mv -v /tools/$(uname -m)-pc-linux-gnu/bin/{ld,ld-old}
+mv -v /tools/bin/{ld-new,ld}
+ln -sv /tools/bin/ld /tools/$(uname -m)-pc-linux-gnu/bin/ld
+
+gcc -dumpspecs | sed -e &#39;s@/tools@@g&#39;                   \
+    -e &#39;/\*startfile_prefix_spec:/{n;s@.*@/usr/lib/ @}&#39; \
+    -e &#39;/\*cpp:/{n;s@$@ -isystem /usr/include@}&#39; &gt;      \
+    `dirname $(gcc --print-libgcc-file-name)`/specs
+
+echo &#39;int main(){}&#39; &gt; dummy.c
+cc dummy.c -v -Wl,--verbose &amp;&gt; dummy.log
+readelf -l a.out | grep &#39;: /lib&#39;</code></pre>
+<p>Si una vez aplicados estos comandos nos sale el siguiente output, es que todo está correcto:</p>
+<pre class="bash"><code>[Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/349Ae.png">
+</p><br>
+
+<p>Ahora bien, ¿quieres quedarte tranquilo y saber si todo se ha hecho correctamente?, hagamos las siguientes comprobaciones.</p>
+<pre class="bash"><code>grep -o &#39;/usr/lib.*/crt[1in].*succeeded&#39; dummy.log
+grep -B1 &#39;^ /usr/include&#39; dummy.log
+grep &#39;SEARCH.*/usr/lib&#39; dummy.log |sed &#39;s|; |\n|g&#39;
+grep &quot;/lib.*/libc.so.6 &quot; dummy.log
+grep found dummy.log</code></pre>
+<p>Si la ejecución de cada uno de estos comandos nos devuelve los siguientes resultados, es que todo está correcto:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349Ev.png">
+</p><br>
+
+<p>El último comando ejecutado, es para limpiar los archivos de prueba:</p>
+<pre class="bash"><code>rm -v dummy.c a.out dummy.log</code></pre>
+<p>Como esta fase ha llevado su tiempo, lo mejor es hacer otra Snapshot:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/349EP.png">
+</p><br>
+
+<h5 id="zlib-en-lfs">Zlib en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr
+
+make
+make check
+make install
+
+mv -v /usr/lib/libz.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libz.so) /usr/lib/libz.so</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="bzip2-en-lfs">Bzip2 en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>patch -Np1 -i ../bzip2-1.0.8-install_docs-1.patch
+sed -i &#39;s@\(ln -s -f \)$(PREFIX)/bin/@\1@&#39; Makefile
+sed -i &quot;s@(PREFIX)/man@(PREFIX)/share/man@g&quot; Makefile
+make -f Makefile-libbz2_so
+make clean
+
+make
+make PREFIX=/usr install
+
+cp -v bzip2-shared /bin/bzip2
+cp -av libbz2.so* /lib
+ln -sv ../../lib/libbz2.so.1.0 /usr/lib/libbz2.so
+rm -v /usr/bin/{bunzip2,bzcat,bzip2}
+ln -sv bzip2 /bin/bunzip2
+ln -sv bzip2 /bin/bzcat</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="xz-en-lfs">Xz en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr    \
+            --disable-static \
+            --docdir=/usr/share/doc/xz-5.2.4
+
+make
+make check
+
+make install
+mv -v   /usr/bin/{lzma,unlzma,lzcat,xz,unxz,xzcat} /bin
+mv -v /usr/lib/liblzma.so.* /lib
+ln -svf ../../lib/$(readlink /usr/lib/liblzma.so) /usr/lib/liblzma.so</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="file-en-lfs">File en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr
+make
+make check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="readline-en-lfs">Readline en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;/MV.*old/d&#39; Makefile.in
+sed -i &#39;/{OLDSUFF}/c:&#39; support/shlib-install
+
+./configure --prefix=/usr    \
+            --disable-static \
+            --docdir=/usr/share/doc/readline-8.0
+
+make SHLIB_LIBS=&quot;-L/tools/lib -lncursesw&quot;
+make SHLIB_LIBS=&quot;-L/tools/lib -lncursesw&quot; install
+mv -v /usr/lib/lib{readline,history}.so.* /lib
+chmod -v u+w /lib/lib{readline,history}.so.*
+ln -sfv ../../lib/$(readlink /usr/lib/libreadline.so) /usr/lib/libreadline.so
+ln -sfv ../../lib/$(readlink /usr/lib/libhistory.so ) /usr/lib/libhistory.so
+
+install -v -m644 doc/*.{ps,pdf,html,dvi} /usr/share/doc/readline-8.0</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="m4-en-lfs">M4 en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;s/IO_ftrylockfile/IO_EOF_SEEN/&#39; lib/*.c
+echo &quot;#define _IO_IN_BACKUP 0x100&quot; &gt;&gt; lib/stdio-impl.h
+
+./configure --prefix=/usr
+make
+make check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="bc-en-lfs">Bc en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>PREFIX=/usr CC=gcc CFLAGS=&quot;-std=c99&quot; ./configure.sh -G -O3
+
+make
+make test
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="binutils-en-lfs">Binutils en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, comenzaremos haciendo una pequeña verificación con el siguiente comando:</p>
+<pre class="bash"><code>expect -c &quot;spawn ls&quot;</code></pre>
+<p>Si la ejecución de este comando devuelve el siguiente output:</p>
+<pre class="bash"><code>spawn ls</code></pre>
+<p>Entonces podemos quedarnos tranquilos.</p>
+<p>Posteriormente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;/@\tincremental_copy/d&#39; gold/testsuite/Makefile.in
+make -v build
+cd build
+
+../configure --prefix=/usr       \
+             --enable-gold       \
+             --enable-ld=default \
+             --enable-plugins    \
+             --enable-shared     \
+             --disable-werror    \
+             --enable-64-bit-bfd \
+             --with-system-zlib
+
+make tooldir=/usr
+make -k check
+make tooldir=/usr install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="gmp-en-lfs">GMP en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr    \
+            --enable-cxx     \
+            --disable-static \
+            --docdir=/usr/share/doc/gmp-6.2.0
+
+make
+make html
+make check 2&gt;&amp;1 | tee gmp-check-log
+awk &#39;/# PASS:/{total+=$3} ; END{print total}&#39; gmp-check-log # Verificamos que la ejecución de este comando devuelva un número mayor a 190
+make install
+make install-html</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="mpfr-en-lfs">MPFR en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr        \
+            --disable-static     \
+            --enable-thread-safe \
+            --docdir=/usr/share/doc/mpfr-4.0.2
+
+make
+make html
+make check
+make install
+make install-html</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="mpc-en-lfs">MPC en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr    \
+            --disable-static \
+            --docdir=/usr/share/doc/mpc-1.1.0
+
+make
+make html
+make check
+make install
+make install-html</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="attr-en-lfs">Attr en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr     \
+            --bindir=/bin     \
+            --disable-static  \
+            --sysconfdir=/etc \
+            --docdir=/usr/share/doc/attr-2.4.48
+
+make
+make check
+make install
+
+mv -v /usr/lib/libattr.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libattr.so) /usr/lib/libattr.so</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="acl-en-lfs">Acl en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr         \
+            --bindir=/bin         \
+            --disable-static      \
+            --libexecdir=/usr/lib \
+            --docdir=/usr/share/doc/acl-2.2.53
+
+make
+make install
+
+mv -v /usr/lib/libacl.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libacl.so) /usr/lib/libacl.so</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="instalación-del-shadow">Instalación del Shadow</h5>
+<p>Para configurar el <strong>Shadow</strong> en nuestro sistema Linux, comenzaremos descomprimiendo el comprimido correspondiente. Posteriormente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;s/groups$(EXEEXT) //&#39; src/Makefile.in
+find man -name Makefile.in -exec sed -i &#39;s/groups\.1 / /&#39;   {} \;
+find man -name Makefile.in -exec sed -i &#39;s/getspnam\.3 / /&#39; {} \;
+find man -name Makefile.in -exec sed -i &#39;s/passwd\.5 / /&#39;   {} \;
+
+sed -i -e &#39;s@#ENCRYPT_METHOD DES@ENCRYPT_METHOD SHA512@&#39; \
+       -e &#39;s@/var/spool/mail@/var/mail@&#39; etc/login.defs
+
+sed -i &#39;s@DICTPATH.*@DICTPATH\t/lib/cracklib/pw_dict@&#39; etc/login.defs
+sed -i &#39;s/1000/999/&#39; etc/useradd
+./configure --sysconfdir=/etc --with-group-name-max-length=32
+
+make
+make install</code></pre>
+<p>Una vez hecho, configuramos el shadow habilitando las <code>shadowed passwords</code> y las <code>shadowed group passwords</code>:</p>
+<pre class="bash"><code>pwconv
+grpconv</code></pre>
+<p>Por último, asignaremos una contraseña al usuario root:</p>
+<pre class="bash"><code>passwd root</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/349QH.png">
+</p><br>
+
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="gcc-en-lfs">GCC en LFS</h5>
+<p><strong>AVISO</strong>: La instalación de este paquete puede demorar MUCHO tiempo, así que paciencia.</p>
+<p>Comenzaremos descomprimiendo el comprimido correspondiente. Una vez hecho, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>case $(uname -m) in
+  x86_64)
+    sed -e &#39;/m64=/s/lib64/lib/&#39; \
+        -i.orig gcc/config/i386/t-linux64
+  ;;
+esac
+
+sed -e &#39;1161 s|^|//|&#39; \
+    -i libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.cc
+
+mkdir -v build
+cd build
+
+SED=sed                               \
+../configure --prefix=/usr            \
+             --enable-languages=c,c++ \
+             --disable-multilib       \
+             --disable-bootstrap      \
+             --with-system-zlib
+
+make
+
+ulimit -s 32768
+
+chown -Rv nobody . 
+su nobody -s /bin/bash -c &quot;PATH=$PATH make -k check&quot; # Es normal que puedan salir errores en la ejecución de este comando, no hay de qué preocuparse.
+
+../contrib/test_summary</code></pre>
+<p>Una vez hecho, proseguiremos con la instalación:</p>
+<pre class="bash"><code>make install
+rm -rf /usr/lib/gcc/$(gcc -dumpmachine)/9.2.0/include-fixed/bits/
+
+chown -v -R root:root \
+    /usr/lib/gcc/*linux-gnu/9.2.0/include{,-fixed}
+
+ln -sv ../usr/bin/cpp /lib
+
+ln -sv gcc /usr/bin/cc
+
+install -v -dm755 /usr/lib/bfd-plugins
+ln -sfv ../../libexec/gcc/$(gcc -dumpmachine)/9.2.0/liblto_plugin.so \
+        /usr/lib/bfd-plugins/</code></pre>
+<p>¿Hay alguna forma en este punto de saber si la instalación se ha realizado con éxito?, efectivamente, tenemos una forma.</p>
+<p>La idea será ejecutar los siguientes comandos:</p>
+<pre class="bash"><code>echo &#39;int main(){}&#39; &gt; dummy.c
+cc dummy.c -v -Wl,--verbose &amp;&gt; dummy.log
+readelf -l a.out | grep &#39;: /lib&#39;
+
+grep -o &#39;/usr/lib.*/crt[1in].*succeeded&#39; dummy.log
+
+grep -B4 &#39;^ /usr/include&#39; dummy.log
+
+grep &#39;SEARCH.*/usr/lib&#39; dummy.log |sed &#39;s|; |\n|g&#39;
+
+grep &quot;/lib.*/libc.so.6 &quot; dummy.log
+
+grep found dummy.log
+
+rm -v dummy.c a.out dummy.log
+
+mkdir -pv /usr/share/gdb/auto-load/usr/lib
+mv -v /usr/lib/*gdb.py /usr/share/gdb/auto-load/usr/lib</code></pre>
+<p>Para saber si todo está en orden, deberás comparar el output con lo siguiente que me sale a mi:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34ap1.png">
+</p><br>
+
+<p>Si los outputs te coinciden por la ejecución de cada comando aislado, entonces está todo correcto y podrás continuar.</p>
+<p>Como esta fase ha llevado mucho tiempo, lo suyo será hacer otra Snapshot:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34ape.png">
+</p><br>
+
+<p>¡No te olvides de retroceder los directorios correspondientes y borrar el directorio principal del archivo descomprimido!</p>
+<h5 id="pk-config-en-lfs">Pk config en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr              \
+            --with-internal-glib       \
+            --disable-host-tool        \
+            --docdir=/usr/share/doc/pkg-config-0.29.2
+
+make
+make check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="ncurses-en-lfs">Ncurses en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;/LIBTOOL_INSTALL/d&#39; c++/Makefile.in
+
+./configure --prefix=/usr           \
+            --mandir=/usr/share/man \
+            --with-shared           \
+            --without-debug         \
+            --without-normal        \
+            --enable-pc-files       \
+            --enable-widec
+
+make
+make install
+
+mv -v /usr/lib/libncursesw.so.6* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libncursesw.so) /usr/lib/libncursesw.so
+
+for lib in ncurses form panel menu ; do
+    rm -vf                    /usr/lib/lib${lib}.so
+    echo &quot;INPUT(-l${lib}w)&quot; &gt; /usr/lib/lib${lib}.so
+    ln -sfv ${lib}w.pc        /usr/lib/pkgconfig/${lib}.pc
+done
+
+rm -vf                     /usr/lib/libcursesw.so
+echo &quot;INPUT(-lncursesw)&quot; &gt; /usr/lib/libcursesw.so
+ln -sfv libncurses.so      /usr/lib/libcurses.so
+
+mkdir -v       /usr/share/doc/ncurses-6.2
+cp -v -R doc/* /usr/share/doc/ncurses-6.2</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="libcap-en-lfs">Libcap en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;/install.*STA...LIBNAME/d&#39; libcap/Makefile
+make lib=lib
+make test
+make lib=lib install
+chmod -v 755 /lib/libcap.so.2.31</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="sed-en-lfs">Sed en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;s/usr/tools/&#39;                 build-aux/help2man
+sed -i &#39;s/testsuite.panic-tests.sh//&#39; Makefile.in
+
+./configure --prefix=/usr --bindir=/bin
+
+make
+make html
+make check
+
+make install
+install -d -m755           /usr/share/doc/sed-4.8
+install -m644 doc/sed.html /usr/share/doc/sed-4.8</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="psmisc-en-lfs">Psmisc en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr
+
+make
+make install
+
+mv -v /usr/bin/fuser   /bin
+mv -v /usr/bin/killall /bin</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="iana-etc-en-lfs">Iana Etc en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>make
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="bison-en-lfs">Bison en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr --docdir=/usr/share/doc/bison-3.5.2
+make
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="flex-en-lfs">Flex en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &quot;/math.h/a #include &lt;malloc.h&gt;&quot; src/flexdef.h
+
+HELP2MAN=/tools/bin/true \
+./configure --prefix=/usr --docdir=/usr/share/doc/flex-2.6.4
+
+make
+make check
+make install
+
+ln -sv flex /usr/bin/lex</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="grep-en-lfs">Grep en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr --bindir=/bin
+
+make
+make check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="bash-en-lfs">Bash en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>patch -Np1 -i ../bash-5.0-upstream_fixes-1.patch
+
+./configure --prefix=/usr                    \
+            --docdir=/usr/share/doc/bash-5.0 \
+            --without-bash-malloc            \
+            --with-installed-readline
+
+make
+chown -Rv nobody .
+su nobody -s /bin/bash -c &quot;PATH=$PATH HOME=/home make tests&quot;
+make install
+mv -vf /usr/bin/bash /bin
+
+exec /bin/bash --login +h</code></pre>
+<p>Con este último comando, lo que estaremos haciendo será ejecutar el programa <strong>Bash</strong> recientemente compilado, reemplazando así el que se está ejecutando actualmente:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bmN.png">
+</p><br>
+
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="libtool-en-lfs">Libtool en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr
+make
+make check # Es posible que salgan errores, pero no hay de qué preocuparse
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="gdbm-en-lfs">GDBM en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr    \
+            --disable-static \
+            --enable-libgdbm-compat
+
+make
+make check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="gperf-en-lfs">Gperf en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr --docdir=/usr/share/doc/gperf-3.1
+
+make
+make -j1 check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="expat-en-lfs">Expat en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;s|usr/bin/env |bin/|&#39; run.sh.in
+
+./configure --prefix=/usr    \
+            --disable-static \
+            --docdir=/usr/share/doc/expat-2.2.9
+
+make
+make check
+make install
+
+install -v -m644 doc/*.{html,png,css} /usr/share/doc/expat-2.2.9</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="inetutils-en-lfs">Inetutils en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr        \
+            --localstatedir=/var \
+            --disable-logger     \
+            --disable-whois      \
+            --disable-rcp        \
+            --disable-rexec      \
+            --disable-rlogin     \
+            --disable-rsh        \
+            --disable-servers
+
+make
+make check
+make install
+
+mv -v /usr/bin/{hostname,ping,ping6,traceroute} /bin
+mv -v /usr/bin/ifconfig /sbin</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<p>Sacaremos otra Snapshot antes de compilar el siguiente paquete:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34boh.png">
+</p><br>
+
+<h5 id="perl-en-lfs">Perl en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>echo &quot;127.0.0.1 localhost $(hostname)&quot; &gt; /etc/hosts
+
+export BUILD_ZLIB=False
+export BUILD_BZIP2=0
+
+sh Configure -des -Dprefix=/usr                 \
+                  -Dvendorprefix=/usr           \
+                  -Dman1dir=/usr/share/man/man1 \
+                  -Dman3dir=/usr/share/man/man3 \
+                  -Dpager=&quot;/usr/bin/less -isR&quot;  \
+                  -Duseshrplib                  \
+                  -Dusethreads
+
+make
+make test
+make install
+unset BUILD_ZLIB BUILD_BZIP2</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="xml-parser-en-lfs">XML Parser en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>perl Makefile.PL
+make
+make test
+make install</code></pre>
+<p>Como veis, es importante por ello tener bien compilado previamente el paquete de <strong>Perl</strong>.</p>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="intltool-en-lfs">Intltool en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;s:\\\${:\\\$\\{:&#39; intltool-update.in
+
+./configure --prefix=/usr
+
+make
+make check
+make install
+
+install -v -Dm644 doc/I18N-HOWTO /usr/share/doc/intltool-0.51.0/I18N-HOWTO</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="autoconf-en-lfs">Autoconf en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed &#39;361 s/{/\\{/&#39; -i bin/autoscan.in
+
+./configure --prefix=/usr
+
+make
+make check # Es posible que salgan errores, pero no hay de qué preocuparse
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="automake-en-lfs">Automake en LFS</h5>
+<p><strong>AVISO</strong>: Este paquete puede tardar bastante, así que toca armarse una vez más de paciencia.</p>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr --docdir=/usr/share/doc/automake-1.16.1
+
+
+make
+make -j4 check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="kmod-en-lfs">Kmod en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr          \
+            --bindir=/bin          \
+            --sysconfdir=/etc      \
+            --with-rootlibdir=/lib \
+            --with-xz              \
+            --with-zlib
+
+make
+make install
+
+for target in depmod insmod lsmod modinfo modprobe rmmod; do
+  ln -sfv ../bin/kmod /sbin/$target
+done
+
+ln -sfv kmod /bin/lsmod</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="gettext-en-lfs">Gettext en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr    \
+            --disable-static \
+            --docdir=/usr/share/doc/gettext-0.20.1
+
+make
+make check
+make install
+
+chmod -v 0755 /usr/lib/preloadable_libintl.so</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="libelf-de-elfutils-en-lfs">Libelf de Elfutils en LFS</h5>
+<p>Este paquete corresponde al que tiene nombre <code>elfutils-0.178.tar.bz2</code>.</p>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr --disable-debuginfod
+
+make
+make check # Es posible que salgan errores, pero no hay de qué preocuparse
+
+make -C libelf install
+install -vm644 config/libelf.pc /usr/lib/pkgconfig
+rm /usr/lib/libelf.a</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="libffi-en-lfs">Libffi en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr --disable-static --with-gcc-arch=native
+
+make
+make check # Es posible que salgan errores, pero no hay de qué preocuparse
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="openssl-en-lfs">Openssl en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./config --prefix=/usr         \
+         --openssldir=/etc/ssl \
+         --libdir=lib          \
+         shared                \
+         zlib-dynamic
+
+make
+make test # Es posible que nos salgan fallos, pero no hay de qué preocuparse
+
+sed -i &#39;/INSTALL_LIBS/s/libcrypto.a libssl.a//&#39; Makefile
+make MANSUFFIX=ssl install
+
+mv -v /usr/share/doc/openssl /usr/share/doc/openssl-1.1.1d
+cp -vfr doc/* /usr/share/doc/openssl-1.1.1d</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="python3-en-lfs">Python3 en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr       \
+            --enable-shared     \
+            --with-system-expat \
+            --with-system-ffi   \
+            --with-ensurepip=yes
+
+make
+make install
+
+make install
+chmod -v 755 /usr/lib/libpython3.8.so
+chmod -v 755 /usr/lib/libpython3.so
+ln -sfv pip3.8 /usr/bin/pip3
+
+install -v -dm755 /usr/share/doc/python-3.8.1/html 
+
+tar --strip-components=1  \
+    --no-same-owner       \
+    --no-same-permissions \
+    -C /usr/share/doc/python-3.8.1/html \
+    -xvf ../python-3.8.1-docs-html.tar.bz2</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="ninja-en-lfs">Ninja en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>export NINJAJOBS=4
+
+sed -i &#39;/int Guess/a \
+  int   j = 0;\
+  char* jobs = getenv( &quot;NINJAJOBS&quot; );\
+  if ( jobs != NULL ) j = atoi( jobs );\
+  if ( j &gt; 0 ) return j;\
+&#39; src/ninja.cc
+
+python3 configure.py --bootstrap
+
+./ninja ninja_test
+./ninja_test --gtest_filter=-SubprocessTest.SetWithLots
+
+install -vm755 ninja /usr/bin/
+install -vDm644 misc/bash-completion /usr/share/bash-completion/completions/ninja
+install -vDm644 misc/zsh-completion  /usr/share/zsh/site-functions/_ninja</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="meson-en-lfs">Meson en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>python3 setup.py build
+
+python3 setup.py install --root=dest
+cp -rv dest/* /</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="coreutils-en-lfs">Coreutils en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>patch -Np1 -i ../coreutils-8.31-i18n-1.patch
+
+sed -i &#39;/test.lock/s/^/#/&#39; gnulib-tests/gnulib.mk
+
+autoreconf -fiv
+FORCE_UNSAFE_CONFIGURE=1 ./configure \
+            --prefix=/usr            \
+            --enable-no-install-program=kill,uptime
+
+make
+make NON_ROOT_USERNAME=nobody check-root
+
+echo &quot;dummy:x:1000:nobody&quot; &gt;&gt; /etc/group
+chown -Rv nobody . 
+
+su nobody -s /bin/bash \
+          -c &quot;PATH=$PATH make RUN_EXPENSIVE_TESTS=yes check&quot; # Es posible que aparezcan errores, pero no hay de qué preocuparse
+
+sed -i &#39;/dummy/d&#39; /etc/group
+
+make install
+
+mv -v /usr/bin/{cat,chgrp,chmod,chown,cp,date,dd,df,echo} /bin
+mv -v /usr/bin/{false,ln,ls,mkdir,mknod,mv,pwd,rm} /bin
+mv -v /usr/bin/{rmdir,stty,sync,true,uname} /bin
+mv -v /usr/bin/chroot /usr/sbin
+mv -v /usr/share/man/man1/chroot.1 /usr/share/man/man8/chroot.8
+sed -i s/\&quot;1\&quot;/\&quot;8\&quot;/1 /usr/share/man/man8/chroot.8
+
+mv -v /usr/bin/{head,nice,sleep,touch} /bin</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="check-en-lfs">Check en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr
+make
+make check
+
+make docdir=/usr/share/doc/check-0.14.0 install &amp;&amp;
+sed -i &#39;1 s/tools/usr/&#39; /usr/bin/checkmk</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="diffutils-en-lfs">Diffutils en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr
+
+make
+make check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="gawk-en-lfs">Gawk en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;s/extras//&#39; Makefile.in
+
+./configure --prefix=/usr
+
+make
+make check
+make install
+
+mkdir -v /usr/share/doc/gawk-5.0.1
+cp    -v doc/{awkforai.txt,*.{eps,pdf,jpg}} /usr/share/doc/gawk-5.0.1</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="findutils-en-lfs">Findutils en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr --localstatedir=/var/lib/locate
+
+make
+make check # Este comando puede mostrar algunos errores, pero no hay de qué preocuparse
+make install
+
+mv -v /usr/bin/find /bin
+sed -i &#39;s|find:=${BINDIR}|find:=/bin|&#39; /usr/bin/updatedb</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="groff-en-lfs">Groff en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>PAGE=A4 ./configure --prefix=/usr
+make -j1
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="grub-en-lfs">GRUB en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr          \
+            --sbindir=/sbin        \
+            --sysconfdir=/etc      \
+            --disable-efiemu       \
+            --disable-werror
+
+make
+make install
+
+mv -v /etc/bash_completion.d/grub /usr/share/bash-completion/completions</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="less-en-lfs">Less en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr --sysconfdir=/etc
+
+make
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="gzip-en-lfs">Gzip en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr
+
+make
+make check # Es posible que aparezcan fallos, pero no hay de qué preocuparse
+make install
+
+mv -v /usr/bin/gzip /bin</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="zstd-en-lfs">Zstd en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>make
+make prefix=/usr install
+
+rm -v /usr/lib/libzstd.a
+mv -v /usr/lib/libzstd.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libzstd.so) /usr/lib/libzstd.so</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="iproute-en-lfs">IPRoute en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i /ARPD/d Makefile
+rm -fv man/man8/arpd.8
+
+sed -i &#39;s/.m_ipt.o//&#39; tc/Makefile
+
+make
+make DOCDIR=/usr/share/doc/iproute2-5.5.0 install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="kbd-en-lfs">Kbd en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>patch -Np1 -i ../kbd-2.2.0-backspace-1.patch
+
+sed -i &#39;s/\(RESIZECONS_PROGS=\)yes/\1no/g&#39; configure
+sed -i &#39;s/resizecons.8 //&#39; docs/man/man8/Makefile.in
+
+PKG_CONFIG_PATH=/tools/lib/pkgconfig ./configure --prefix=/usr --disable-vlock
+
+make
+make check
+make install
+
+mkdir -v       /usr/share/doc/kbd-2.2.0
+cp -R -v docs/doc/* /usr/share/doc/kbd-2.2.0</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="libpipeline-en-lfs">Libpipeline en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr
+
+make
+make check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="make-en-lfs">Make en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr
+
+make
+make PERL5LIB=$PWD/tests/ check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="patch-en-lfs">Patch en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr
+
+make
+make check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="man-db-en-lfs">MAN DB en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr                        \
+            --docdir=/usr/share/doc/man-db-2.9.0 \
+            --sysconfdir=/etc                    \
+            --disable-setuid                     \
+            --enable-cache-owner=bin             \
+            --with-browser=/usr/bin/lynx         \
+            --with-vgrind=/usr/bin/vgrind        \
+            --with-grap=/usr/bin/grap            \
+            --with-systemdtmpfilesdir=           \
+            --with-systemdsystemunitdir=
+
+make
+make check
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="tar-en-lfs">Tar en LFS</h5>
+<p><strong>AVISO</strong>: La instalación de este paquete puede demorar un buen rato.</p>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>FORCE_UNSAFE_CONFIGURE=1  \
+./configure --prefix=/usr \
+            --bindir=/bin
+
+make
+make check
+make install
+
+make -C doc install-html docdir=/usr/share/doc/tar-1.32</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="texinfo-en-lfs">Texinfo en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr --disable-static
+
+make
+make check
+make install
+
+make TEXMF=/usr/share/texmf install-tex
+
+pushd /usr/share/info
+rm -v dir
+for f in *
+  do install-info $f dir 2&gt;/dev/null
+done
+popd</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="vim-en-lfs">Vim en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>echo &#39;#define SYS_VIMRC_FILE &quot;/etc/vimrc&quot;&#39; &gt;&gt; src/feature.h
+
+./configure --prefix=/usr
+
+make
+
+chown -Rv nobody .
+su nobody -s /bin/bash -c &quot;LANG=en_US.UTF-8 make -j1 test&quot; &amp;&gt; vim-test.log
+make install
+
+ln -sv vim /usr/bin/vi
+for L in  /usr/share/man/{,*/}man1/vim.1; do
+    ln -sv vim.1 $(dirname $L)/vi.1
+done
+
+ln -sv ../vim/vim82/doc /usr/share/doc/vim-8.2.0190
+
+cat &gt; /etc/vimrc &lt;&lt; &quot;EOF&quot;
+&quot; Begin /etc/vimrc
+
+&quot; Ensure defaults are set before customizing settings, not after
+source $VIMRUNTIME/defaults.vim
+let skip_defaults_vim=1 
+
+set nocompatible
+set backspace=2
+set mouse=
+syntax on
+if (&amp;term == &quot;xterm&quot;) || (&amp;term == &quot;putty&quot;)
+  set background=dark
+endif
+
+&quot; End /etc/vimrc
+EOF</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="procps-en-lfs">Procps en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr                            \
+            --exec-prefix=                           \
+            --libdir=/usr/lib                        \
+            --docdir=/usr/share/doc/procps-ng-3.3.15 \
+            --disable-static                         \
+            --disable-kill
+
+make
+
+sed -i -r &#39;s|(pmap_initname)\\\$|\1|&#39; testsuite/pmap.test/pmap.exp
+sed -i &#39;/set tty/d&#39; testsuite/pkill.test/pkill.exp
+rm testsuite/pgrep.test/pgrep.exp
+make check
+
+make install
+
+mv -v /usr/lib/libprocps.so.* /lib
+ln -sfv ../../lib/$(readlink /usr/lib/libprocps.so) /usr/lib/libprocps.so</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="util-linux-en-lfs">Util Linux en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>mkdir -pv /var/lib/hwclock
+
+./configure ADJTIME_PATH=/var/lib/hwclock/adjtime   \
+            --docdir=/usr/share/doc/util-linux-2.35.1 \
+            --disable-chfn-chsh  \
+            --disable-login      \
+            --disable-nologin    \
+            --disable-su         \
+            --disable-setpriv    \
+            --disable-runuser    \
+            --disable-pylibmount \
+            --disable-static     \
+            --without-python     \
+            --without-systemd    \
+            --without-systemdsystemunitdir
+
+make
+
+chown -Rv nobody .
+su nobody -s /bin/bash -c &quot;PATH=$PATH make -k check&quot;
+
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="e2fsprogs-en-lfs">E2fsprogs en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>mkdir -v build
+cd build
+
+../configure --prefix=/usr           \
+             --bindir=/bin           \
+             --with-root-prefix=&quot;&quot;   \
+             --enable-elf-shlibs     \
+             --disable-libblkid      \
+             --disable-libuuid       \
+             --disable-uuidd         \
+             --disable-fsck
+
+make
+make check
+make install
+
+chmod -v u+w /usr/lib/{libcom_err,libe2p,libext2fs,libss}.a
+
+gunzip -v /usr/share/info/libext2fs.info.gz
+install-info --dir-file=/usr/share/info/dir /usr/share/info/libext2fs.info
+
+makeinfo -o      doc/com_err.info ../lib/et/com_err.texinfo
+install -v -m644 doc/com_err.info /usr/share/info
+install-info --dir-file=/usr/share/info/dir /usr/share/info/com_err.info</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="sysklogd-en-lfs">Sysklogd en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>sed -i &#39;/Error loading kernel symbols/{n;n;d}&#39; ksym_mod.c
+sed -i &#39;s/union wait/int/&#39; syslogd.c
+
+make
+
+make BINDIR=/sbin install
+
+cat &gt; /etc/syslog.conf &lt;&lt; &quot;EOF&quot;
+# Begin /etc/syslog.conf
+
+auth,authpriv.* -/var/log/auth.log
+*.*;auth,authpriv.none -/var/log/sys.log
+daemon.* -/var/log/daemon.log
+kern.* -/var/log/kern.log
+mail.* -/var/log/mail.log
+user.* -/var/log/user.log
+*.emerg *
+
+# End /etc/syslog.conf
+EOF</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="sysvinit-en-lfs">Sysvinit en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>patch -Np1 -i ../sysvinit-2.96-consolidated-1.patch
+
+make
+make install</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<h5 id="eudev-en-lfs">Eudev en LFS</h5>
+<p>Para la instalación de este paquete, una vez descomprimido el comprimido correspondiente, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>./configure --prefix=/usr           \
+            --bindir=/sbin          \
+            --sbindir=/sbin         \
+            --libdir=/usr/lib       \
+            --sysconfdir=/etc       \
+            --libexecdir=/lib       \
+            --with-rootprefix=      \
+            --with-rootlibdir=/lib  \
+            --enable-manpages       \
+            --disable-static
+
+make
+
+mkdir -pv /lib/udev/rules.d
+mkdir -pv /etc/udev/rules.d
+
+make check
+make install
+
+tar -xvf ../udev-lfs-20171102.tar.xz
+make -f udev-lfs-20171102/Makefile.lfs install
+
+udevadm hwdb --update</code></pre>
+<p>Una vez finalizada la instalación, retrocedemos los directorios necesarios y borramos el directorio principal del descomprimido.</p>
+<p>Ya en este punto, creamos una Snapshot:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bSs.png">
+</p><br>
+
+<h4 id="limpieza-final">Limpieza Final</h4>
+<p>Comenzaremos colocando los símbolos de depuración para las bibliotecas seleccionadas en archivos separados:</p>
+<pre class="bash"><code>save_lib=&quot;ld-2.31.so libc-2.31.so libpthread-2.31.so libthread_db-1.0.so&quot;
+
+cd /lib
+
+for LIB in $save_lib; do
+    objcopy --only-keep-debug $LIB $LIB.dbg 
+    strip --strip-unneeded $LIB
+    objcopy --add-gnu-debuglink=$LIB.dbg $LIB 
+done    
+
+save_usrlib=&quot;libquadmath.so.0.0.0 libstdc++.so.6.0.27
+             libitm.so.1.0.0 libatomic.so.1.2.0&quot; 
+
+cd /usr/lib
+
+for LIB in $save_usrlib; do
+    objcopy --only-keep-debug $LIB $LIB.dbg
+    strip --strip-unneeded $LIB
+    objcopy --add-gnu-debuglink=$LIB.dbg $LIB
+done
+
+unset LIB save_lib save_usrlib</code></pre>
+<p>Antes de realizar la eliminación, deberemos tener especial cuidado para asegurarnos de que ninguno de los binarios que están a punto de ser borrados se estén ejecutando:</p>
+<pre class="bash"><code>exec /tools/bin/bash</code></pre>
+<p>Una vez hecho, ahora los binarios y las bibliotecas se pueden quitar de forma segura:</p>
+<pre class="bash"><code>/tools/bin/find /usr/lib -type f -name \*.a \
+   -exec /tools/bin/strip --strip-debug {} &#39;;&#39;
+
+/tools/bin/find /lib /usr/lib -type f \( -name \*.so* -a ! -name \*dbg \) \
+   -exec /tools/bin/strip --strip-unneeded {} &#39;;&#39;
+
+/tools/bin/find /{bin,sbin} /usr/{bin,sbin,libexec} -type f \
+    -exec /tools/bin/strip --strip-all {} &#39;;&#39;</code></pre>
+<p>Finalmente, limpiamos algunos archivos adicionales que quedan de las pruebas en ejecución:</p>
+<pre class="bash"><code>rm -rf /tmp/*</code></pre>
+<p>Y ya en este punto, lo que haremos será cerrar sesión y volver a ingresar al entorno chroot con un comando chroot esta vez actualizado.</p>
+<p><strong>IMPORTANTE</strong>: A partir de ahora, en caso de necesitar volver a ingresar al entorno chroot tras salir, deberemos de ejecutar el comando que indico a continuación:</p>
+<pre class="bash"><code>exit
+
+chroot &quot;$LFS&quot; /usr/bin/env -i          \
+    HOME=/root TERM=&quot;$TERM&quot;            \
+    PS1=&#39;(lfs chroot) \u:\w\$ &#39;        \
+    PATH=/bin:/usr/bin:/sbin:/usr/sbin \
+    /bin/bash --login</code></pre>
+<p>Una vez dentro, eliminaremos las siguientes biliotecas estáticas las cuales pueden ser borradas sin problema:</p>
+<pre class="bash"><code>rm -f /usr/lib/lib{bfd,opcodes}.a
+rm -f /usr/lib/libbz2.a
+rm -f /usr/lib/lib{com_err,e2p,ext2fs,ss}.a
+rm -f /usr/lib/libltdl.a
+rm -f /usr/lib/libfl.a
+rm -f /usr/lib/libz.a</code></pre>
+<p>Así como los archivos instalados en los directorios '<em>/usr/lib</em>' y '<em>/usr/libexec</em>':</p>
+<pre class="bash"><code>find /usr/lib /usr/libexec -name \*.la -delete</code></pre>
+<h4 id="configuración-del-sistema">Configuración del sistema</h4>
+<h5 id="instalación-de-lfs-bootscripts">Instalación de LFS Bootscripts</h5>
+<p>Lo que haremos será dirigirnos al directorio '<em>/sources</em>' y descomprimir el comprimido correspondiente para este paquete. Una vez descomprimido, aplicaremos el siguiente comando:</p>
+<pre class="bash"><code>make install</code></pre>
+<h5 id="gestión-de-dispositivos">Gestión de dispositivos</h5>
+<p>Comenzaremos creando unas reglas de <strong>Udev</strong> personalizadas. Para ello, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>bash /lib/udev/init-net-rules.sh
+cat /etc/udev/rules.d/70-persistent-net.rules</code></pre>
+<p>Deberíamos ver un output como el siguiente:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bTu.png">
+</p><br>
+
+<p>Sobre este archivo, efectuaremos un pequeño cambio. Como podréis apreciar en la imagen de arriba, el nombre de la interfaz es <strong>enp0s3</strong>, en mi caso lo voy a llamar <strong>eth0</strong>, por tanto abriremos el archivo, lo cambiaremos y posteriormente volveremos a ejecutar los mismos comandos:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bTN.png">
+</p><br>
+
+<p>Una vez hecho, ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>udevadm test /sys/block/sr0
+
+sed -i -e &#39;s/&quot;write_cd_rules&quot;/&quot;write_cd_rules by-id&quot;/&#39; \
+    /etc/udev/rules.d/83-cdrom-symlinks.rules</code></pre>
+<p>Deberíamos ver un output como el siguiente:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bUo.png">
+</p><br>
+
+<p>El archivo situado en <code>/etc/udev/rules.d/83-cdrom-symlinks.rules</code> debe de tener el siguiente contenido:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bUp.png">
+</p><br>
+
+<p>Por último, para manejar dispositivos duplicados, ejecutaremos el siguiente comando:</p>
+<pre class="bash"><code>cat &gt; /etc/udev/rules.d/83-duplicate_devs.rules &lt;&lt; &quot;EOF&quot;
+
+# Persistent symlinks for webcam and tuner
+KERNEL==&quot;video*&quot;, ATTRS{idProduct}==&quot;1910&quot;, ATTRS{idVendor}==&quot;0d81&quot;, \
+    SYMLINK+=&quot;webcam&quot;
+KERNEL==&quot;video*&quot;, ATTRS{device}==&quot;0x036f&quot;, ATTRS{vendor}==&quot;0x109e&quot;, \
+    SYMLINK+=&quot;tvtuner&quot;
+
+EOF</code></pre>
+<h5 id="creación-de-archivos-de-configuración-de-interfaz-de-red">Creación de archivos de configuración de interfaz de red</h5>
+<p>Nos dirigiremos a la ruta <code>/etc/sysconfig</code> y nos crearemos un fichero con nombre <code>ifconfig.eth0</code> que posea la siguiente estructura:</p>
+<pre class="bash"><code>cat &gt; ifconfig.eth0 &lt;&lt; &quot;EOF&quot;
+ONBOOT=yes
+IFACE=eth0
+SERVICE=ipv4-static
+IP=192.168.1.2
+GATEWAY=192.168.1.1
+PREFIX=24
+BROADCAST=192.168.1.255
+EOF</code></pre>
+<p>En mi caso, lo adaptaré a mi segmento de red:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bUP.png">
+</p><br>
+
+<p>Por otro lado, añadiremos el archivo <code>/etc/resolv.conf</code> con el siguiente contenido:</p>
+<pre class="bash"><code>cat &gt; /etc/resolv.conf &lt;&lt; &quot;EOF&quot;
+# Begin /etc/resolv.conf
+
+domain &lt;Your Domain Name&gt;
+nameserver &lt;IP address of your primary nameserver&gt;
+nameserver &lt;IP address of your secondary nameserver&gt;
+
+# End /etc/resolv.conf
+EOF</code></pre>
+<p>Obviamente, cambiaremos sus valores a los correspondientes:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bUZ.png">
+</p><br>
+
+<h5 id="configurando-el-nombre-de-host-del-sistema">Configurando el nombre de host del sistema</h5>
+<p>Durante el proceso de arranque, el archivo <code>/etc/hostname</code> se usa para establecer el nombre de host del sistema.</p>
+<p>Lo que haremos será crear este archivo donde ingresaremos nuestro nombre de host:</p>
+<pre class="bash"><code>echo &quot;s4viOS&quot; &gt; /etc/hostname</code></pre>
+<p>Por otro lado, nos crearemos el archivo <code>/etc/hosts</code> con el siguiente contenido:</p>
+<pre class="bash"><code>cat &gt; /etc/hosts &lt;&lt; &quot;EOF&quot;
+# Begin /etc/hosts
+
+127.0.0.1 localhost
+127.0.1.1 &lt;FQDN&gt; &lt;HOSTNAME&gt;
+&lt;192.168.1.1&gt; &lt;FQDN&gt; &lt;HOSTNAME&gt; [alias1] [alias2 ...]
+::1       localhost ip6-localhost ip6-loopback
+ff02::1   ip6-allnodes
+ff02::2   ip6-allrouters
+
+# End /etc/hosts
+EOF</code></pre>
+<p>Posteriormente, lo adaptaremos a nuestras necesidades:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bW6.png">
+</p><br>
+
+<h5 id="configurando-el-sysvinit">Configurando el Sysvinit</h5>
+<p>Durante la inicialización del núcleo, el primer programa que se ejecuta se especifica en la línea de comando o, por defecto, <strong>init</strong>. Este programa lee el archivo de inicialización '<em>/etc/inittab</em>'.</p>
+<p>La idea será crear este archivo con el siguiente contenido:</p>
+<pre class="bash"><code>cat &gt; /etc/inittab &lt;&lt; &quot;EOF&quot;
+# Begin /etc/inittab
+
+id:3:initdefault:
+
+si::sysinit:/etc/rc.d/init.d/rc S
+
+l0:0:wait:/etc/rc.d/init.d/rc 0
+l1:S1:wait:/etc/rc.d/init.d/rc 1
+l2:2:wait:/etc/rc.d/init.d/rc 2
+l3:3:wait:/etc/rc.d/init.d/rc 3
+l4:4:wait:/etc/rc.d/init.d/rc 4
+l5:5:wait:/etc/rc.d/init.d/rc 5
+l6:6:wait:/etc/rc.d/init.d/rc 6
+
+ca:12345:ctrlaltdel:/sbin/shutdown -t1 -a -r now
+
+su:S016:once:/sbin/sulogin
+
+1:2345:respawn:/sbin/agetty --noclear tty1 9600
+2:2345:respawn:/sbin/agetty tty2 9600
+3:2345:respawn:/sbin/agetty tty3 9600
+4:2345:respawn:/sbin/agetty tty4 9600
+5:2345:respawn:/sbin/agetty tty5 9600
+6:2345:respawn:/sbin/agetty tty6 9600
+
+# End /etc/inittab
+EOF</code></pre>
+<h5 id="configuración-del-reloj-del-sistema">Configuración del reloj del sistema</h5>
+<p>Crearemos un archivo en '<em>/etc/sysconfig/clock</em>' con el siguiente contenido:</p>
+<pre class="bash"><code>cat &gt; /etc/sysconfig/clock &lt;&lt; &quot;EOF&quot;
+# Begin /etc/sysconfig/clock
+
+UTC=1
+
+# Set this to any options you might need to give to hwclock,
+# such as machine hardware clock type for Alphas.
+CLOCKPARAMS=
+
+# End /etc/sysconfig/clock
+EOF</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bWL.png">
+</p><br>
+
+<h5 id="configuración-de-la-consola-de-linux">Configuración de la consola de Linux</h5>
+<p>En este punto, configuraremos el script de consola que configura el mapa del teclado, la fuente de la consola y el nivel de registro del kernel de la consola.</p>
+<p>Nos crearemos un archivo en <code>/etc/sysconfig/console</code> con el siguiente contenido (cada uno lo puede adaptar a sus necesidades):</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bXf.png">
+</p><br>
+
+<h5 id="creando-archivo-rc-site">Creando archivo rc site</h5>
+<p>Este archivo se sitúa en '<em>/etc/sysconfig/rc.site</em>' y ya posee contenido. Lo que haremos será cambiar algunas cosas de este archivo.</p>
+<p>Empezaremos por los siguientes datos:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bXJ.png">
+</p><br>
+
+<p>Posteriormente, descomentaremos las siguientes líneas:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bXW.png">
+</p><br>
+
+<p>También descomentaremos las siguientes y cambiaremos sus valores respectivos a <strong>yes</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bXV.png">
+</p><br>
+
+<p>Por último, cambiaremos el valor del <strong>HOSTNAME</strong> y descomentaremos la línea del <strong>SYSKLOGD</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bYf.png">
+</p><br>
+
+<h4 id="archivos-de-inicio-de-bash-shell">Archivos de inicio de Bash Shell</h4>
+<p>El programa de shell <strong>/bin/bash</strong> utiliza una colección de archivos de inicio para ayudar a crear un entorno en el que ejecutarse. Cada archivo tiene un uso específico y puede afectar el inicio de sesión, así como los entornos interactivos de manera diferente.</p>
+<p>Los archivos '<em>/etc/profile</em>' y '<em>~/.bash_profile</em>' son leídos en el momento en el que se invoca la shell como una shell de inicio de sesión interactivo.</p>
+<p>La lista de todos los entornos locales compatibles con Glibc se pueden obtener ejecutando el siguiente comando:</p>
+<p><code>locale -a</code></p>
+<p>Simplemente seguid mis pasos para configurarlo de la misma manera:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bZq.png">
+</p><br>
+
+<p>Una vez hecho, ya estamos listos para adaptar nuestro fichero <strong>profile</strong>. En este caso, también crearemos de una tirada el archivo <strong>inputrc</strong>, un archivo de configuración de la biblioteca Readline, que proporciona capacidades de edición mientras el usuario ingresa una línea desde la terminal.</p>
+<p>Este funciona traduciendo las entradas del teclado en acciones específicas:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34bZr.png">
+</p><br>
+
+<p>Por otro lado, crearemos el archivo '<em>/etc/shells</em>', el cual contiene una lista de shells de inicio de sesión en el sistema:</p>
+<pre class="bash"><code>cat &gt; /etc/shells &lt;&lt; &quot;EOF&quot;
+# Begin /etc/shells
+
+/bin/sh
+/bin/bash
+
+# End /etc/shells
+EOF</code></pre>
+<h1 id="haciendo-nuestro-sistema-booteable">Haciendo nuestro sistema booteable</h1>
+<h4 id="creando-archivo-fstab">Creando archivo fstab</h4>
+<p>El archivo <strong>fstab</strong> es utilizado por algunos programas para determinar dónde los sistemas de archivos deben de ser montados de forma predeterminada, en qué orden, y qué debe ser comprobado antes del montaje.</p>
+<p>Lo que haremos será crear una nueva tabla de sistemas de archivos como esta:</p>
+<pre class="bash"><code>cat &gt; /etc/fstab &lt;&lt; &quot;EOF&quot;
+# Begin /etc/fstab
+
+# file system  mount-point  type     options             dump  fsck
+#                                                              order
+
+/dev/&lt;xxx&gt;     /            &lt;fff&gt;    defaults            1     1
+/dev/&lt;yyy&gt;     swap         swap     pri=1               0     0
+proc           /proc        proc     nosuid,noexec,nodev 0     0
+sysfs          /sys         sysfs    nosuid,noexec,nodev 0     0
+devpts         /dev/pts     devpts   gid=5,mode=620      0     0
+tmpfs          /run         tmpfs    defaults            0     0
+devtmpfs       /dev         devtmpfs mode=0755,nosuid    0     0
+
+# End /etc/fstab
+EOF</code></pre>
+<p>En ella, ajustaremos los siguientes valores:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c1v.png">
+</p><br>
+
+<p>Probablemente estarás pensando en que me he equivocado con los nombres, ¡pero no!... la idea será que <strong>sdb</strong> pase a convertirse a <strong>sda</strong>, ahora lo veréis con mayor detalle.</p>
+<h4 id="instalación-del-kernel">Instalación del Kernel</h4>
+<p>Nos dirigiremos a la ruta '<em>/sources</em>', y descomprimiremos el siguiente comprimido, aplicando a su vez los siguientes comandos:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c1T.png">
+</p><br>
+
+<p>Una vez hecho, abriremos con <strong>vi</strong> el archivo <strong>.config</strong> generado y haremos las siguientes comprobaciones:</p>
+<ul>
+<li>Confirmamos que <strong>CONFIG_DEVTMPFS=y</strong></li>
+<li>Confirmamos que <strong>CONFIG_EFI_STUV=y</strong></li>
+<li>Confirmamos que <strong>CONFIG_UEVENT_HELPER</strong> no esté seteado</li>
+</ul>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c22.png">
+</p><br>
+
+<p>Si esto es así, podremos continuar sin problemas.</p>
+<p>Ahora bien, lo que haremos será ejecutar el siguiente comando:</p>
+<pre class="bash"><code>make menuconfig</code></pre>
+<p>Esto nos abrirá el siguiente menú:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c2c.png">
+</p><br>
+
+<p>En este menú, nos iremos a la opción que pone <strong>General Setup</strong>. Una vez dentro, veremos lo siguiente:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c2d.png">
+</p><br>
+
+<p>En este punto, cambiaremos el valor de <strong>Default hostname</strong> al de nuestro sistema, en mi caso... <strong>S4viOS</strong>:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c2e.png">
+</p><br>
+
+<p>Una vez cambiado, salimos y guardamos los cambios.</p>
+<p>Ya fuera, aplicamos los siguientes comandos para efectuar la compilación:</p>
+<pre class="bash"><code>make
+make modules_install</code></pre>
+<p>Una vez hecho, continuamos con los siguientes comandos:</p>
+<pre class="bash"><code>cp -iv arch/x86/boot/bzImage /boot/vmlinuz-5.5.3-lfs-9.1
+cp -iv System.map /boot/System.map-5.5.3
+cp -iv .config /boot/config-5.5.3
+install -d /usr/share/doc/linux-5.5.3
+cp -r Documentation/* /usr/share/doc/linux-5.5.3
+
+chown -R 0:0 .</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c4b.png">
+</p><br>
+
+<p>Para terminar, ejecutamos estos últimos comandos antes de empezar con el GRUB:</p>
+<pre class="bash"><code>install -v -m755 -d /etc/modprobe.d
+cat &gt; /etc/modprobe.d/usb.conf &lt;&lt; &quot;EOF&quot;
+# Begin /etc/modprobe.d/usb.conf
+
+install ohci_hcd /sbin/modprobe ehci_hcd ; /sbin/modprobe -i ohci_hcd ; true
+install uhci_hcd /sbin/modprobe ehci_hcd ; /sbin/modprobe -i uhci_hcd ; true
+
+# End /etc/modprobe.d/usb.conf
+EOF</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c4h.png">
+</p><br>
+
+<h4 id="uso-del-grub-para-configurar-el-proceso-de-arranque">Uso del GRUB para configurar el proceso de arranque</h4>
+<p>Ejecutaremos los siguientes comandos:</p>
+<pre class="bash"><code>grub-install /dev/sdb
+
+cat &gt; /boot/grub/grub.cfg &lt;&lt; &quot;EOF&quot;
+# Begin /boot/grub/grub.cfg
+set default=0
+set timeout=5
+
+insmod ext2
+set root=(hd0,2)
+
+menuentry &quot;GNU/Linux, Linux 5.5.3-lfs-9.1&quot; {
+        linux   /boot/vmlinuz-5.5.3-lfs-9.1 root=/dev/sda2 ro
+}
+EOF</code></pre>
+<p>Nos debería salir un output tal que así:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c4B.png">
+</p><br>
+
+<p>Eso sí... el archivo <code>grub.cfg</code> anteriormente creado deberá ser adaptado. En mi caso, tendrá estos valores:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c5s.png">
+</p><br>
+
+<h1 id="creando-archivos-finales">Creando archivos finales</h1>
+<p>Nos estamos acercando al final. Para ir concluyendo, nos vamos a ir creando una serie de archivos finales.</p>
+<p>Por un lado, nos creamos un archivo <code>lsb-release</code>, en mi caso con el siguiente contenido:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c5E.png">
+</p><br>
+
+<p>Por otro lado, creamos el archivo <code>os-release</code>, en mi caso con el siguiente contenido:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c5N.png">
+</p><br>
+
+<p>Por último, nos crearemos un archivo <code>bashrc</code>:</p>
+<pre class="bash"><code>cat &gt; /etc/bashrc &lt;&lt; &quot;EOF&quot; 
+# Begin /etc/bashrc
+# Written for Beyond Linux From Scratch
+# by James Robertson &lt;jameswrobertson@earthlink.net&gt;
+# updated by Bruce Dubbs &lt;bdubbs@linuxfromscratch.org&gt;
+# System wide aliases and functions.
+# System wide environment variables and startup programs should go 
+into
+# /etc/profile. Personal environment variables and startup programs
+# should go into ~/.bash_profile. Personal aliases and functions 
+should
+# go into ~/.bashrc
+# Provides colored /bin/ls and /bin/grep commands. Used in 
+conjunction
+# with code in /etc/profile.
+alias ls=&#39;ls --color=auto&#39;
+alias grep=&#39;grep --color=auto&#39;
+# Provides prompt for non-login shells, specifically shells started
+# in the X environment. [Review the LFS archive thread titled
+# PS1 Environment Variable for a great case study behind this script
+# addendum.]
+NORMAL=&quot;\[\e[0m\]&quot;
+RED=&quot;\[\e[1;31m\]&quot;
+GREEN=&quot;\[\e[1;32m\]&quot;
+if [[ $EUID == 0 ]] ; then
+PS1=&quot;$RED\u [ $NORMAL\w$RED ]# $NORMAL&quot;
+else
+PS1=&quot;$GREEN\u [ $NORMAL\w$GREEN ]\$ $NORMAL&quot;
+fi
+unset RED GREEN NORMAL
+# End /etc/bashrc
+EOF</code></pre>
+<h1 id="arrancando-nuestra-nueva-distribución-linux-s4vios">Arrancando nuestra nueva distribución Linux S4viOS</h1>
+<p>Antes de reiniciar, desmontaremos todas las monturas que teníamos previamente creadas:</p>
+<pre class="bash"><code>umount -v $LFS/dev/pts
+umount -v $LFS/dev
+umount -v $LFS/run
+umount -v $LFS/proc
+umount -v $LFS/sys
+cd /
+umount -v $LFS</code></pre>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c6r.png">
+</p><br>
+
+<p>Atentos al comando final:</p>
+<pre class="bash"><code>shutdown -F now</code></pre>
+<p>Una vez hecho, como es de esperar... nuestra máquina virtual se habrá apagado. Ahora bien, lo que haremos será lo siguiente, como dije anteriormente de lo que definimos en el <strong>fstab</strong>, nuestro <strong>sdb</strong> se va a convertir en <strong>sda</strong>, ¿cómo?, pues simplemente quitando el disco del sistema Host con Debian.</p>
+<p>Es decir, tenemos estos 2:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c6w.png">
+</p><br>
+
+<p>Pues lo que hacemos es quitar el <strong>Debian Base</strong>, que es con el que nos hemos construido nuestro sistema Linux residente en el otro disco. Nos debería quedar algo así:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c6x.png">
+</p><br>
+
+<p>¡Arranquemos la máquina virtual y veamos qué pasa!:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c6F.png">
+</p><br>
+
+<p>Esto tiene muy buena pinta, presionamos Enter:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c6E.png">
+</p><br>
+
+<p>¡Qué preciosidad!, nuestro propio sistema Linux cobrando vida, ¡vamos a iniciar sesión!:</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c6G.png">
+</p><br>
+
+<p>Como veis, perfectamente funcional y con total control de las cosas que hemos ido instalando (sin cosas raras):</p>
+<p align="center">
+     <img src="https://funkyimg.com/i/34c6H.png">
+</p><br>
+
+<p>Ya en este punto, podríamos continuar con la instalación y configuración de la interfaz gráfica, pero... esto lo haré en otra <strong>guía aparte</strong> siempre y cuando vea que este Gist recibe apoyo :)</p>
+<p>Mientras tanto, os dejo por aquí un vídeo de mi canal de YouTube donde os enseño paso a paso a configurar un buen entorno de trabajo en Linux:</p>
+<p><a href="https://www.youtube.com/watch?v=MF4qRSedmEs"><span>https://www.youtube.com/watch?v=MF4qRSedmEs</span></a></p>
+<p>Quién sabe, igual podremos hacer luego una fusión con <strong>S4viOS</strong>.</p>
+<p>Para aquellos que por X razones quieran descargar la distribución (igual lo queréis para verificar ciertas cosas), os dejo el enlace de descarga de la máquina por aquí:</p>
+<ul>
+<li><a href="https://drive.google.com/file/d/1GACSGENgHvWr2v_8JbcUieLyZAoU11qe/view?usp=sharing"><span>https://drive.google.com/file/d/1GACSGENgHvWr2v_8JbcUieLyZAoU11qe/view?usp=sharing</span></a></li>
+</ul>
+<blockquote>
+<p><strong>Usuario de la máquina</strong>: root</p>
+</blockquote>
+<blockquote>
+<p><strong>Contraseña</strong>: nmapypadentro</p>
+</blockquote>
+<p>¡Un saludo y que os sea leve!</p>
+
+      </article>
+      <a href="/" class="back">&larr; back to feed</a>
+    </div>
+  </main>
+  <footer>
+    <div class="container">
+      <div class="footer-left">gh0stnet // gh0stnet0.github.io</div>
+      <div class="footer-right"><span>silence</span> is not absence. silence is control.</div>
+    </div>
+  </footer>
+</body>
+</html>

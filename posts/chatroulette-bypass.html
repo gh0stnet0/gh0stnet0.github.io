@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bypassing de validación en Chatroulette // gh0stnet</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080808; --bg2: #0d0d0d; --border: #1a1a1a;
+      --cyan: #00fff0; --cyan-dim: rgba(0,255,240,0.15);
+      --text: #c8c8c8; --text-dim: #555; --red: #ff2e2e; --white: #e8e8e8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Share Tech Mono', monospace;
+      font-size: 13px; line-height: 1.7; min-height: 100vh; cursor: crosshair; }
+    body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+      pointer-events: none; z-index: 9999; }
+    body::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9998; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+    header { border-bottom: 1px solid var(--border); padding: 20px 0; position: sticky; top: 0;
+      background: rgba(8,8,8,0.95); backdrop-filter: blur(8px); z-index: 100; }
+    header .container { display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: 'VT323', monospace; font-size: 28px; color: var(--cyan);
+      text-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,255,240,0.3); text-decoration: none; letter-spacing: 2px; }
+    .logo span { color: var(--text-dim); }
+    nav { display: flex; gap: 24px; }
+    nav a { color: var(--text-dim); text-decoration: none; font-size: 12px; letter-spacing: 1px;
+      transition: color 0.2s; text-transform: uppercase; }
+    nav a:hover, nav a.active { color: var(--cyan); }
+    .status-bar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 6px 0;
+      font-size: 11px; color: var(--text-dim); overflow: hidden; }
+    .status-bar .container { display: flex; gap: 32px; align-items: center; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
+      display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--cyan); } 50% { opacity: 0.4; box-shadow: none; } }
+
+    /* POST PAGE */
+    .post-head { padding: 56px 0 28px; border-bottom: 1px solid var(--border); }
+    .post-meta { font-size: 11px; color: var(--cyan); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+    .post-meta .sep { color: var(--text-dim); margin: 0 8px; }
+    .post-head h1 { font-family: 'VT323', monospace; font-size: 48px; color: var(--white); line-height: 1.05; font-weight: normal; }
+    .credit { background: var(--bg2); border: 1px solid var(--border); border-left: 2px solid var(--cyan);
+      margin: 28px 0 8px; padding: 12px 16px; font-size: 11px; color: var(--text-dim); letter-spacing: 1px; }
+    .credit a { color: var(--cyan); text-decoration: none; }
+    .credit a:hover { text-shadow: 0 0 10px var(--cyan); }
+    article { padding: 32px 0 20px; }
+    article h1, article h2, article h3, article h4 { font-family: 'VT323', monospace; color: var(--cyan);
+      font-weight: normal; line-height: 1.1; margin: 36px 0 14px; }
+    article h1 { font-size: 36px; } article h2 { font-size: 30px; } article h3 { font-size: 25px; } article h4 { font-size: 21px; }
+    article p, article ul, article ol, article table, article pre, article blockquote { margin-bottom: 18px; }
+    article ul, article ol { padding-left: 24px; }
+    article a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid var(--cyan-dim); }
+    article a:hover { border-bottom-color: var(--cyan); }
+    article strong { color: var(--white); }
+    article code { color: var(--cyan); background: var(--bg2); padding: 1px 5px; font-family: 'Share Tech Mono', monospace; }
+    article pre { background: var(--bg2); border: 1px solid var(--border); border-top: 2px solid var(--cyan);
+      padding: 16px 20px; overflow-x: auto; font-size: 12px; line-height: 1.8; }
+    article pre code { background: none; padding: 0; color: var(--text); }
+    article img, article video { max-width: 100%; height: auto; border: 1px solid var(--border); display: block; margin: 18px 0; }
+    article blockquote { border-left: 2px solid var(--text-dim); padding-left: 16px; color: var(--text-dim); }
+    article table { border-collapse: collapse; display: block; overflow-x: auto; }
+    article td, article th { border: 1px solid var(--border); padding: 6px 12px; }
+    article th { color: var(--cyan); text-align: left; }
+    article hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+    .back { display: inline-block; margin: 8px 0 40px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-dim); text-decoration: none; }
+    .back:hover { color: var(--cyan); }
+
+    footer { border-top: 1px solid var(--border); padding: 32px 0; margin-top: 40px; }
+    footer .container { display: flex; justify-content: space-between; align-items: center; }
+    .footer-left, .footer-right { font-size: 11px; color: var(--text-dim); }
+    .footer-right span { color: var(--cyan); }
+    .logo:hover { animation: glitch 0.3s infinite; }
+    @keyframes glitch {
+      0% { text-shadow: 0 0 20px var(--cyan), 2px 0 var(--red), -2px 0 var(--cyan); }
+      25% { text-shadow: 0 0 20px var(--cyan), -2px 0 var(--red), 2px 0 var(--cyan); }
+      50% { text-shadow: 0 0 20px var(--cyan), 2px 2px var(--red), -2px -2px var(--cyan); }
+      75% { text-shadow: 0 0 20px var(--cyan), -2px 2px var(--red), 2px -2px var(--cyan); }
+      100% { text-shadow: 0 0 20px var(--cyan), 0 0 var(--red), 0 0 var(--cyan); }
+    }
+    @media (max-width: 600px) {
+      .post-head h1 { font-size: 36px; } nav { gap: 16px; }
+      footer .container { flex-direction: column; gap: 8px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/" class="logo">gh<span>0</span>stnet<span>_</span></a>
+      <nav>
+        <a href="/" class="active">feed</a>
+        <a href="/about">about</a>
+        <a href="/ops">ops</a>
+        <a href="/bugbounty">disclosures</a>
+      </nav>
+    </div>
+  </header>
+  <div class="status-bar">
+    <div class="container">
+      <span><span class="status-dot"></span>systems nominal</span>
+      <span>// gh0stnet0.github.io</span>
+    </div>
+  </div>
+  <main>
+    <div class="container">
+      <section class="post-head">
+        <div class="post-meta">2020.01.30<span class="sep">//</span>research</div>
+        <h1>Bypassing de validación en Chatroulette</h1>
+        <div class="credit">// archive mirror &mdash; originally published by <a href="https://s4vitar.github.io">S4vitar</a> on 2020-01-30. reposted with the author's permission.</div>
+      </section>
+      <article>
+<p><img src="/posts/img/chatroulette-bypass/chatroulette-main.jpg" /></p>
+<p>Hoy os vengo a mostrar un bypassing de lo más absurdo en la plataforma de Chatroulette. Supongo que sabréis que a la hora de entrar en Chatroulette se lleva a cabo una especie de validación, donde te piden que sonrías para que tu cara quede registrada en el sistema y posteriormente puedas acceder. Pues atentos a la jugada.</p>
+<h1 id="antecedentes">Antecedentes</h1>
+<p>Resulta que estaba yo tan tranquilo dispuesto a buscar a <strong>Julio Ureña</strong> en la plataforma de Chatroulette, cuando vi que para empezar a conectar con gente se me solicitaba la siguiente información:</p>
+<p align="center">
+<img src="/posts/img/chatroulette-bypass/smile.jpg">
+</p>
+
+<p>Al parecer debes de sonreir frente a la cámara para ya comenzar a usar el servicio. Esta fase me interesó mucho, ¿de qué forma se hace la validación?... es lo que mi mente inquieta se preguntaba.</p>
+<p>Dado que <code>Burpsuite</code> siempre responde a estas preguntas, probé a tirar de nuestro querido proxy para ver cómo viajaban las consultas. Desde que presionas <code>Start</code>, empiezan a viajar una serie de WebSockets con valores que identifican entre otras cosas nuestro <code>UserToken</code>:</p>
+<p align="center">
+<img src="/posts/img/chatroulette-bypass/burp-first.png">
+</p>
+
+<p>Justo en el momento en el que se comienza a buscar una sonrisa del lado de nuestra cámara, se inicia un proceso de <code>ClientPing</code>, bajo el cual se saca un Snapshot para posteriormente del lado del servidor interpretar la imagen :</p>
+<p align="center">
+<img src="/posts/img/chatroulette-bypass/clientping.png">>
+</p>
+
+<h2 id="checking-absurdo">Checking absurdo</h2>
+<p>La gran fase de validación viene ahora. Si presionamos varias veces en <code>Forward</code>, de pronto podremos notar algo que llama mucho la atención:</p>
+<p align="center">
+<img src="/posts/img/chatroulette-bypass/base64.png">
+</p>
+
+<p>La misma pregunta que te estás haciendo es la que me hice yo en su momento, ¿qué demonios es esto?.</p>
+<p>Bueno pues este churraco... es un base64 más grande que mi casa, y lo que más llama la atención es el tipo de archivo que representa una vez se decodifica desde consola:</p>
+<pre class="bash"><code>┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $cat file | base64 -d &gt; content
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $file content 
+content: PNG image data, 640 x 480, 8-bit/color RGBA, non-interlaced</code></pre>
+<p>Efectivamente, una imagen, ¿y a qué corresponde esta imagen?, a la instantánea que se realiza:</p>
+<p align="center">
+<img src="/posts/img/chatroulette-bypass/instantanea-base64.png">>
+</p>
+
+<h2 id="bypassing-de-la-sonrisa">Bypassing de la sonrisa</h2>
+<p>¿Cómo hacemos por tanto para bypassear este sistema de validación y no tener que sonreir de nuestro lado para conectar con Julio?, pues bueno... simplemente tendríamos que coger una foto cualquiera de internet en la que salga alguien sonriendo:</p>
+<p align="center">
+<img src="/posts/img/chatroulette-bypass/smile-girl.jpeg">
+</p>
+
+<p>La pasamos a base64 desde consola:</p>
+<pre class="bash"><code>┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $cat smile-girl.jpeg | base64 -w 0 | xclip -sel clip
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $</code></pre>
+<p>Y sustituimos el nuevo valor en base64 por el que previamente Burpsuite nos ha interceptado.</p>
+<p>Tras hacerlo, la validación se habrá aplicado y ya podremos empezar a conectar con los demás sin haber sido necesario de nuestro lado sonreir y mostrar el rostro:</p>
+<p align="center">
+<img src="/posts/img/chatroulette-bypass/man.jpg">
+</p>
+
+<p>Posteriormente, estuvimos debatiendo este señor y yo la máquina BigHead de HackTheBox, donde me comentaba una vía no intencionada de explotación para acceder al sistema, un grande este señor.</p>
+
+      </article>
+      <a href="/" class="back">&larr; back to feed</a>
+    </div>
+  </main>
+  <footer>
+    <div class="container">
+      <div class="footer-left">gh0stnet // gh0stnet0.github.io</div>
+      <div class="footer-right"><span>silence</span> is not absence. silence is control.</div>
+    </div>
+  </footer>
+</body>
+</html>
