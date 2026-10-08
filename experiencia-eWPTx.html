@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi experiencia con la certificación eWPTxv2 // gh0stnet</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080808; --bg2: #0d0d0d; --border: #1a1a1a;
+      --cyan: #00fff0; --cyan-dim: rgba(0,255,240,0.15);
+      --text: #c8c8c8; --text-dim: #555; --red: #ff2e2e; --white: #e8e8e8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Share Tech Mono', monospace;
+      font-size: 13px; line-height: 1.7; min-height: 100vh; cursor: crosshair; }
+    body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+      pointer-events: none; z-index: 9999; }
+    body::after { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9998; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+    header { border-bottom: 1px solid var(--border); padding: 20px 0; position: sticky; top: 0;
+      background: rgba(8,8,8,0.95); backdrop-filter: blur(8px); z-index: 100; }
+    header .container { display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-family: 'VT323', monospace; font-size: 28px; color: var(--cyan);
+      text-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,255,240,0.3); text-decoration: none; letter-spacing: 2px; }
+    .logo span { color: var(--text-dim); }
+    nav { display: flex; gap: 24px; }
+    nav a { color: var(--text-dim); text-decoration: none; font-size: 12px; letter-spacing: 1px;
+      transition: color 0.2s; text-transform: uppercase; }
+    nav a:hover, nav a.active { color: var(--cyan); }
+    .status-bar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 6px 0;
+      font-size: 11px; color: var(--text-dim); overflow: hidden; }
+    .status-bar .container { display: flex; gap: 32px; align-items: center; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan);
+      display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--cyan); } 50% { opacity: 0.4; box-shadow: none; } }
+
+    /* POST PAGE */
+    .post-head { padding: 56px 0 28px; border-bottom: 1px solid var(--border); }
+    .post-meta { font-size: 11px; color: var(--cyan); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
+    .post-meta .sep { color: var(--text-dim); margin: 0 8px; }
+    .post-head h1 { font-family: 'VT323', monospace; font-size: 48px; color: var(--white); line-height: 1.05; font-weight: normal; }
+    .credit { background: var(--bg2); border: 1px solid var(--border); border-left: 2px solid var(--cyan);
+      margin: 28px 0 8px; padding: 12px 16px; font-size: 11px; color: var(--text-dim); letter-spacing: 1px; }
+    .credit a { color: var(--cyan); text-decoration: none; }
+    .credit a:hover { text-shadow: 0 0 10px var(--cyan); }
+    article { padding: 32px 0 20px; }
+    article h1, article h2, article h3, article h4 { font-family: 'VT323', monospace; color: var(--cyan);
+      font-weight: normal; line-height: 1.1; margin: 36px 0 14px; }
+    article h1 { font-size: 36px; } article h2 { font-size: 30px; } article h3 { font-size: 25px; } article h4 { font-size: 21px; }
+    article p, article ul, article ol, article table, article pre, article blockquote { margin-bottom: 18px; }
+    article ul, article ol { padding-left: 24px; }
+    article a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid var(--cyan-dim); }
+    article a:hover { border-bottom-color: var(--cyan); }
+    article strong { color: var(--white); }
+    article code { color: var(--cyan); background: var(--bg2); padding: 1px 5px; font-family: 'Share Tech Mono', monospace; }
+    article pre { background: var(--bg2); border: 1px solid var(--border); border-top: 2px solid var(--cyan);
+      padding: 16px 20px; overflow-x: auto; font-size: 12px; line-height: 1.8; }
+    article pre code { background: none; padding: 0; color: var(--text); }
+    article img, article video { max-width: 100%; height: auto; border: 1px solid var(--border); display: block; margin: 18px 0; }
+    article blockquote { border-left: 2px solid var(--text-dim); padding-left: 16px; color: var(--text-dim); }
+    article table { border-collapse: collapse; display: block; overflow-x: auto; }
+    article td, article th { border: 1px solid var(--border); padding: 6px 12px; }
+    article th { color: var(--cyan); text-align: left; }
+    article hr { border: 0; border-top: 1px solid var(--border); margin: 32px 0; }
+    .back { display: inline-block; margin: 8px 0 40px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--text-dim); text-decoration: none; }
+    .back:hover { color: var(--cyan); }
+
+    footer { border-top: 1px solid var(--border); padding: 32px 0; margin-top: 40px; }
+    footer .container { display: flex; justify-content: space-between; align-items: center; }
+    .footer-left, .footer-right { font-size: 11px; color: var(--text-dim); }
+    .footer-right span { color: var(--cyan); }
+    .logo:hover { animation: glitch 0.3s infinite; }
+    @keyframes glitch {
+      0% { text-shadow: 0 0 20px var(--cyan), 2px 0 var(--red), -2px 0 var(--cyan); }
+      25% { text-shadow: 0 0 20px var(--cyan), -2px 0 var(--red), 2px 0 var(--cyan); }
+      50% { text-shadow: 0 0 20px var(--cyan), 2px 2px var(--red), -2px -2px var(--cyan); }
+      75% { text-shadow: 0 0 20px var(--cyan), -2px 2px var(--red), 2px -2px var(--cyan); }
+      100% { text-shadow: 0 0 20px var(--cyan), 0 0 var(--red), 0 0 var(--cyan); }
+    }
+    @media (max-width: 600px) {
+      .post-head h1 { font-size: 36px; } nav { gap: 16px; }
+      footer .container { flex-direction: column; gap: 8px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="/" class="logo">gh<span>0</span>stnet<span>_</span></a>
+      <nav>
+        <a href="/" class="active">feed</a>
+        <a href="/about">about</a>
+        <a href="/ops">ops</a>
+        <a href="/bugbounty">disclosures</a>
+      </nav>
+    </div>
+  </header>
+  <div class="status-bar">
+    <div class="container">
+      <span><span class="status-dot"></span>systems nominal</span>
+      <span>// gh0stnet0.github.io</span>
+    </div>
+  </div>
+  <main>
+    <div class="container">
+      <section class="post-head">
+        <div class="post-meta">2020.10.14<span class="sep">//</span>certificaciones</div>
+        <h1>Mi experiencia con la certificación eWPTxv2</h1>
+        <div class="credit">// archive mirror &mdash; originally published by <a href="https://s4vitar.github.io">S4vitar</a> on 2020-10-14. reposted with the author's permission.</div>
+      </section>
+      <article>
+<p align="center">
+<img src="/posts/img/eWPTxv2/eWPTxv2.jpeg">
+</p>
+
+<h2 id="certificación-ewptxv2">Certificación eWPTxv2</h2>
+<h3 id="mi-experiencia-personal">Mi experiencia personal</h3>
+<p>Ya era hora de redactar este artículo... entre tantas cosas en las que ando metido no he podido sacar un rato para comentaros mi experiencia con esta certificación. Ahora que estoy algo menos ajetreado en esta noche de inspiración... vamos a analizar qué es lo que está pasando aquí.</p>
+<p>La certificación <strong>eWPTXv2</strong>, ¿merece la pena?, pues mi respuesta es un 'si'. La verdad es que ha sido una certificación desafiante, sobre todo a la hora de hacer el examen, porque me encontré con más cosas de las que me pensaba que habrían y la verdad es que hubo un puro mixto de vulnerabilidades a explotar.</p>
+<p>Para que tengáis una idea de cosillas que llegué a explotar, pues hubieron desde inyecciones SQL, hasta ataques Blind XXE, ataques de deserialización combinados con vulnerabilidades de tipo SSRF para conseguir RCE, ataques XSS, Object Serialization y otras muchas cosas más.</p>
+<p>La dinámica del examen es algo distinta a la que tiene por ejemplo Offensive Security, me refiero, en vez de ponerte una serie de objetivos acompañados con un Score para saber en todo momento si llegas a la nota para aprobar o no, esto es más a lo... 'Tú encuentra todo lo que puedas, que ya luego nosotros revisamos el informe final y en base a lo que hayas encontrado decidimos'.</p>
+<h3 id="qué-me-pareció-el-laboratorio">¿Qué me pareció el laboratorio?</h3>
+<p>Respecto al laboratorio, he de deciros que no puedo comentar nada al respecto, me hubiera gustado probarlo... pero quise aprovechar un cupón que salió en el mes de Septiembre para el Voucher, donde se te quedaba el precio a 300 euros... por lo que decidí ir directo al examen. Ir directo al examen supone que no te entregan documentación ni nada por el estilo, porque estás pagando únicamente para hacer el examen.</p>
+<p>Fue algo arriesgado probar a examinarse sin tener previo material, pero oye... si la jugada salía bien, pues chimpún y pa' dentro, de lo contrario en el peor de los casos pues ya pagaba el curso más adelante y le metía más caña, ¡pero el que no arriesga no gana!.</p>
+<h3 id="es-difícil-la-certificación">¿Es difícil la certificación?</h3>
+<p>Para aquel o aquella que tenga planteado examinarse de esta certificación, recomiendo de antes tener buenas bases previas sobre pentesting web (ojo, hablo sobre todo si pretendes ir directo al examen). Recomiendo haber teniendo experiencia y manejo al menos sobre los siguientes tipos de vulnerabilidades:</p>
+<ul>
+<li>Inyecciones SQL (Manuales)</li>
+<li>Xml External Entity Injections XXE (Incluido Blind XXE)</li>
+<li>Server-Side Request Forgery (SSRF)</li>
+<li>Cross-Site Request Forgery (CSRF)</li>
+<li>Java Deserialization Attacks (Y otros tipos de ataques de deserialización)</li>
+<li>Template Injections</li>
+<li>Cross-Site Scripting (XSS) [Todos los tipos]</li>
+<li>Authorization Bypass</li>
+<li>Padding Oracle Attack</li>
+<li>Local File Inclusion (LFI)</li>
+<li>Remote File Inclusion (RFI)</li>
+<li>Type Juggling</li>
+</ul>
+<p>Entre otras muchas más que probablemente me esté dejando en el tintero, pero por lo menos las fundamentales que son con las que más frecuencia trataréis. También recomiendo tener cierto dominio y control sobre los lenguajes Python y PHP, pues en ocasiones os vais a tener que crear vuestras propias utilidades para explotar ciertas vulnerabilidades.</p>
+<p>Con tener dominio de estos lenguajes, me refiero no sólo a nivel de programación, sino también a nivel de entender qué puede estar haciendo un código por detrás... tratando de reversearlo o aprovechar el mismo para computar ciertas cosas (Si doy más pistas es Spoiler, así que preferible dejarlo en el aire xD).</p>
+<h3 id="cómo-es-el-examen">¿Cómo es el examen?</h3>
+<p>La idea del examen es la siguiente, te dan un acceso por VPN y te piden que efectúes un análisis de vulnerabilidades sobre un dominio que cuenta con tres subdominios. El análisis de vulnerabilidades comprende no sólo la identificación de las vulnerabilidades, sino también la explotación de las mismas.</p>
+<p>Aislado a todo lo que encuentres, sí que es cierto que hay una serie de requisitos que tienes que cumplir para lograr aprobar el examen, aunque lo indican como "Los requisitos necesarios pero no suficientes para aprobar...".</p>
+<p>Estos son:</p>
+<ul>
+<li>Leer cierto archivo alojado en una ruta interna del sistema.</li>
+<li>Conseguir ejecución remota de comandos mediante la explotación de dos servicios que corren en la máquina, accesibles desde el servidor web.</li>
+</ul>
+<p>Si consigues estos objetivos y encima encuentras un buen puñado de vulnerabilidades extra, yo diría que ya te puedes quedar tranquilo/a. Recordad que no hay puntuación, no hay una nota en si que podáis calcular para saber más o menos el Score que podáis estar sacando, la idea es más bien encontrar todo lo que puedas.</p>
+<p>Bajo mi experiencia, he de decir que llegué a explotar algunas vulnerabilidades que me parecieron flipantes, en el sentido de que igual me esperaba que las vulnerabilidades a explotar iban a ser algo más sencillas, pero en absoluto... hay alguna que otra que te puede hacer perder bastante tiempo, sobre todo una que llevaré siempre conmigo en el corazón con la que estuve casi un día entero para sacarla (mucha metodología de prueba/error).</p>
+<h3 id="cuánto-dura-el-examen">¿Cuánto dura el examen?</h3>
+<p>El examen dura un total de siete días. En mi caso necesité cuatro días para encontrar todas las vulnerabilidades que pude y un día para generar el informe final. Efectivamente chavales, lo que tanto nos gusta a todos, una vez finalizas es necesario detallar todo lo encontrado a través de un reporte técnico y ejecutivo, incorporando las capturas de pantalla necesarias y las pruebas de concepto de todo lo que hayas hecho.</p>
+<p>Aislado al examen, la fase de documentación son otros siete días aparte, pero bueno en ese aspecto fui bastante rápido porque ya había estado previamente trabajando en una plantilla hecha en LaTeX para ir a tiro hecho (igual que en el OSCP), así que la documentación fue lo que menos me llevó. En conclusión, contando con los días para la examinación y la creación del reporte final, el examen son unos catorce días, pero una vez finalizados los siete primeros días del examen, te cortan la conexión por VPN.</p>
+<h3 id="qué-toca-ahora">¿Qué toca ahora?</h3>
+<p>He estado pensando en hacer el AWAE (OSWE) de Offensive Security, así en caso de sacarla os puedo comentar diferencias con respecto a la certificación eWPTXv2, porque por el momento no puedo hacer distinción.</p>
+<p>Como siempre, en paralelo seguiré subiendo vídeos al canal de YouTube y generando todo el contenido que pueda para vosotros.</p>
+<p>¡A cuidarse!</p>
+
+      </article>
+      <a href="/" class="back">&larr; back to feed</a>
+    </div>
+  </main>
+  <footer>
+    <div class="container">
+      <div class="footer-left">gh0stnet // gh0stnet0.github.io</div>
+      <div class="footer-right"><span>silence</span> is not absence. silence is control.</div>
+    </div>
+  </footer>
+</body>
+</html>
